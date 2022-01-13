@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{15871927-AEF2-4D43-A508-92994F3CD5E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Garmin.Ble.Lib", "src\Garmin.Ble.Lib\Garmin.Ble.Lib.csproj", "{B4ECE78D-BED6-4621-B2D7-E42AD136EBBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GarminWatchTools", "src\GarminWatchTools\GarminWatchTools.csproj", "{C369D8D9-A277-42C3-8315-FE4F64CAF5D0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A5301C76-E72E-4F6D-B571-01EFFC16C1CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Garmin.Ble.Lib.Tests", "test\Garmin.Ble.Lib.Tests\Garmin.Ble.Lib.Tests.csproj", "{7E343BAE-DD72-4AC1-8402-358B8F2B1B57}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B4ECE78D-BED6-4621-B2D7-E42AD136EBBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4ECE78D-BED6-4621-B2D7-E42AD136EBBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4ECE78D-BED6-4621-B2D7-E42AD136EBBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4ECE78D-BED6-4621-B2D7-E42AD136EBBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C369D8D9-A277-42C3-8315-FE4F64CAF5D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C369D8D9-A277-42C3-8315-FE4F64CAF5D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C369D8D9-A277-42C3-8315-FE4F64CAF5D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C369D8D9-A277-42C3-8315-FE4F64CAF5D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E343BAE-DD72-4AC1-8402-358B8F2B1B57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E343BAE-DD72-4AC1-8402-358B8F2B1B57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E343BAE-DD72-4AC1-8402-358B8F2B1B57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E343BAE-DD72-4AC1-8402-358B8F2B1B57}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B4ECE78D-BED6-4621-B2D7-E42AD136EBBB} = {15871927-AEF2-4D43-A508-92994F3CD5E0}
+		{C369D8D9-A277-42C3-8315-FE4F64CAF5D0} = {15871927-AEF2-4D43-A508-92994F3CD5E0}
+		{7E343BAE-DD72-4AC1-8402-358B8F2B1B57} = {A5301C76-E72E-4F6D-B571-01EFFC16C1CD}
+	EndGlobalSection
+EndGlobal
