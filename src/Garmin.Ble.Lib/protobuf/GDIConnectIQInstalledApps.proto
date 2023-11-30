@@ -1,0 +1,133 @@
+syntax = "proto2";
+package GDI.Proto.ConnectIQInstalledApps;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIConnectIQInstalledApps";
+option optimize_for = LITE_RUNTIME;
+
+message ConnectIQInstalledAppsService {
+    optional GetInstalledAppsRequest get_installed_apps_request = 1;
+    optional GetInstalledAppsResponse get_installed_apps_response = 2;
+    optional DeleteAppRequest delete_app_request = 3;
+    optional DeleteAppResponse delete_app_response = 4;
+    optional UpdateInstalledAppsRequest update_installed_app_request = 5;
+    optional UpdateInstalledAppsResponse update_installed_app_response = 6;
+    optional EnableNativeAppRequest enable_native_app_request = 7;
+    optional EnableNativeAppResponse enable_native_app_response = 8;
+    optional LaunchAppRequest launch_app_request = 9;                      // Requires configuration bit 73: Launch Remote CIQ App Support
+    optional LaunchAppResponse launch_app_response = 10;
+}
+
+enum AppType {
+    UNKNOWN_APP_TYPE = 0;
+    WATCH_APP = 1;
+    WIDGET = 2;
+    WATCH_FACE = 3;
+    DATA_FIELD = 4;
+    ALL = 5;
+    NONE = 6;  ///  This is only return the available_space and available_slots
+    AUDIO_CONTENT_PROVIDER = 7;
+}
+
+message GetInstalledAppsRequest {
+    required AppType app_type = 1;
+}
+
+message GetInstalledAppsResponse {
+    required uint64 available_space = 1;
+    required uint32 available_slots = 2;
+    repeated InstalledApp installed_app = 3;  // Sorted by display order
+
+    message InstalledApp {
+        required bytes store_app_id = 1;
+        required AppType app_type = 2;
+        required string name = 3;
+        required bool disabled = 4;
+        optional uint32 version = 5;
+        optional string filename = 6;
+        optional uint64 filesize = 7;
+        optional uint32 native_app_id = 8;  // Set for any app that does not come from the store
+        optional bool favorite = 9;
+    }
+}
+
+message DeleteAppRequest {
+    required bytes store_app_id = 1;
+    required AppType app_type = 2;
+}
+
+message DeleteAppResponse {
+    enum Status {
+        UNKNOWN_STATUS = 0;
+        OK = 1;
+        FAILED_TO_DELETE = 2;  // If the app does not exist on the device, the device should return OK.
+                               // FAILED_TO_DELETE should be returned if the app exists but the device
+                               // could not delete the app for some reason
+    }
+
+    required Status status = 1;
+}
+
+message UpdateInstalledAppsRequest {
+    repeated InstalledApp installed_app = 1;  // Sorted by display order to be displayed on the device.
+                                              // If an app exists on the device and the array does not include a matching
+                                              // app ID, the app will be deleted if it's a 3rd party app or hidden if it's
+                                              // a built-in Garmin app.
+
+    message InstalledApp {
+        required bytes app_id = 1;
+        required AppType app_type = 2;
+        required bool disabled = 3 [default = false];  // Disabled is only used for native apps and watch faces to hide them but not
+                                                       // remove them from device
+        optional bool favorite = 4;
+    }
+}
+
+message UpdateInstalledAppsResponse {
+    enum Status {
+        UNKNOWN_STATUS = 0;
+        OK = 1;
+        FAILED_TO_UPDATE = 2;
+    }
+
+    required Status status = 1;
+}
+
+message EnableNativeAppRequest {
+    required uint32 native_app_id = 1;  // deprecated - if app_id is sent this field is ignored
+    required AppType app_type = 2;
+    optional bytes app_id = 3;
+}
+
+message EnableNativeAppResponse {
+    enum Status {
+        UNKNOWN_STATUS = 0;
+        OK = 1;
+        INVALID_NATIVE_APP = 2;
+    }
+
+    required Status status = 1;
+}
+
+message LaunchAppRequest {
+    enum StartUpMode {
+        APP_STARTUP_MODE_NORMAL = 0;                       // Normal startup mode
+        APP_STARTUP_MODE_MEDIA_PLAYBACK_CONFIGURATION = 1; // Start in playback configuration for Media app
+        APP_STARTUP_MODE_MEDIA_SYNC_CONFIGURATION = 2;     // Start in sync configuration for Media apps
+        APP_STARTUP_MODE_NO_UI = 3;                        // Start in playback mode for Media apps
+    };
+
+    required bytes app_uuid = 1;
+    required StartUpMode app_startup_mode = 2;
+}
+
+message LaunchAppResponse {
+    enum Status {
+        LAUNCH_STATUS_SUCCESS = 0;               // Launch was successful
+        LAUNCH_STATUS_APP_ALREADY_RUNNING = 1;   // App is already running
+        LAUNCH_STATUS_APP_NOT_INSTALLED = 2;     // App is not installed
+        LAUNCH_STATUS_UNKNOWN_ERROR = 3;         // Launch was not successful
+    }
+
+    required Status status = 1;
+}

@@ -1,0 +1,734 @@
+syntax = "proto2";
+package GDI.Proto.ExploreSync;
+
+import "GDIDataTypes.proto";
+
+// FOR JAVA (Android) COMPILATION ONLY
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIExploreSyncProto";
+option optimize_for = LITE_RUNTIME;
+
+////////////////////////////////////////
+// All uuids are 16 bytes.
+// All strings are UTF-8 encoded.
+// All timestamps are in Unix time.
+////////////////////////////////////////
+
+message ExploreSyncService {
+    optional StartSyncRequest start_sync_request = 1;
+    optional StartSyncResponse start_sync_response = 2;
+    optional SyncFinishedNotification sync_finished_notification = 3;
+
+    optional CollectionListWriteRequest collection_list_write_request = 4;
+    optional CollectionListWriteResponse collection_list_write_response = 5;
+
+    optional CollectionReadRequest collection_read_request = 6;
+    optional CollectionReadResponse collection_read_response = 7;
+
+    optional CollectionDigestWriteRequest collection_digest_write_request = 8;
+    optional CollectionDigestWriteResponse collection_digest_write_response = 9;
+    optional CollectionDigestReadRequest collection_digest_read_request = 10;
+    optional CollectionDigestReadResponse collection_digest_read_response = 11;
+
+    optional WaypointReadRequest waypoint_read_request = 12;
+    optional WaypointReadResponse waypoint_read_response = 13;
+
+    optional WaypointDigestWriteRequest waypoint_digest_write_request = 14;
+    optional WaypointDigestWriteResponse waypoint_digest_write_response = 15;
+    optional WaypointDigestReadRequest waypoint_digest_read_request = 16;
+    optional WaypointDigestReadResponse waypoint_digest_read_response = 17;
+
+    optional ChangeSummaryRequest change_summary_request = 18;
+    optional ChangeSummaryResponse change_summary_response = 19;
+
+    optional WaypointDataReadyRequest waypoint_data_ready_request = 20;
+    optional WaypointDataReadyResponse waypoint_data_ready_response = 21;
+
+    optional CollectionDataReadyRequest collection_data_ready_request = 22;
+    optional CollectionDataReadyResponse collection_data_ready_response = 23;
+
+    optional LineDigestWriteRequest line_digest_write_request = 24;
+    optional LineDigestWriteResponse line_digest_write_response = 25;
+    optional LineDigestReadRequest line_digest_read_request = 26;
+    optional LineDigestReadResponse line_digest_read_response = 27;
+
+    optional LineDataReadyRequest line_data_ready_request = 28;
+    optional LineDataReadyResponse line_data_ready_response = 29;
+
+    optional LineReadRequest line_read_request = 30;
+    optional LineReadResponse line_read_response = 31;
+
+    optional ActiveLineDigestWriteRequest active_line_digest_write_request = 32;
+    optional ActiveLineDigestWriteResponse active_line_digest_write_response = 33;
+}
+
+enum SyncType {
+    SYNC_TYPE_FULL          = 1; // Perform a sync as if this is the first sync.
+    SYNC_TYPE_INCREMENTAL   = 2; // Perform a normal incremental sync.
+}
+
+// Add specific rejection reasons as needed.
+enum StartSyncStatus {
+    START_SYNC_ACCEPTED = 1;
+    START_SYNC_REJECTED = 2;
+    START_SYNC_UNSUPPORTED_PROTOCOL_VERSION = 3;
+}
+
+enum SyncFinishedStatus {
+    SYNC_FINISHED_OK        = 1; // Sync completed successfully.
+    SYNC_FINISHED_FAILED    = 2; // An error occurred during sync.
+}
+
+// Add specific errors as needed.
+enum WriteStatus {
+    WRITE_STATUS_SUCCESS     = 0;
+    WRITE_STATUS_ERROR       = 1; // Fatal sync error.
+    WRITE_STATUS_ABORT       = 2; // No error occurred but sync should be aborted.
+}
+
+// Add specific errors as needed.
+enum ReadStatus {
+    READ_STATUS_SUCCESS      = 0;
+    READ_STATUS_MORE         = 1;
+    READ_STATUS_ERROR        = 2;
+}
+
+// Bitflags.
+enum CollectionPart {
+    COLLECTION_PART_METADATA    = 0x01;
+    COLLECTION_PART_OBJECTS     = 0x02;
+}
+
+// Bitflags.
+enum WaypointPart {
+    WAYPOINT_PART_DATA          = 0x01;
+    WAYPOINT_PART_NOTE          = 0x02;
+}
+
+//Bitflags.
+enum LinePart {
+    LINE_PART_SUMMARY   = 0x01; //Must be sent first to add a new line
+    LINE_PART_POINTS    = 0x02;
+    LINE_PART_STAT      = 0x04;
+    LINE_PART_DISPLAY   = 0x08;
+    LINE_PART_SPORT     = 0x10;
+}
+
+// Bitflags.
+enum SyncCapability {
+    SYNC_CAPABILITY_BASIC           = 0x00;
+    SYNC_CAPABILITY_GCJ02           = 0x01;
+    SYNC_CAPABILITY_ACTIVE_LINES    = 0x02;
+}
+
+// Bitflags.
+enum LineCapability {
+    LINE_CAPABILITY_BASIC = 0x00;
+    LINE_CAPABILITY_NAME_POINT_ICONS = 0x01;
+    LINE_CAPABILITY_NAME_POINT_FIT = 0x02;
+    LINE_CAPABILITY_START_FLAGS = 0x04;
+    LINE_CAPABILITY_MARINE_WATER_DATA = 0x08;
+    LINE_CAPABILITY_GENERIC_POINT_DATA = 0x10;
+    LINE_CAPABILITY_NAME_POINT = 0x20;
+
+}
+
+// Bitflags.
+enum WaypointCapability {
+    WAYPOINT_CAPABILITY_BASIC   = 0x00;
+    WAYPOINT_CAPABILITY_NOTE    = 0x01;
+}
+
+enum ItemDataTypes {
+    ITEM_DATA_TYPE_POINT        = 0;
+    ITEM_DATA_TYPE_TRACK        = 1;
+    ITEM_DATA_TYPE_ROUTE        = 2;
+}
+
+enum ActiveLineType {
+    ACTIVE_LINE_TYPE_ACTIVE_RECORDING = 0;
+    ACTIVE_LINE_TYPE_ACTIVE_NAVIGATION = 1;
+}
+
+enum LineType {
+    LINE_TYPE_TRACK = 0;
+    LINE_TYPE_ROUTE = 1;
+    LINE_TYPE_ACTIVITY = 2;
+    LINE_TYPE_CURRENT_RECORDING = 3;
+    LINE_TYPE_TRACBACK = 4;
+    LINE_TYPE_GOTO_COURSE = 5;
+    LINE_TYPE_GOTO_BEARING = 6;
+    LINE_TYPE_ON_ROAD_ROUTE = 7;
+}
+
+message VersionStamp {
+    required uint32 edit_time = 1;
+
+    // true when a part has been changed to accommodate a device limitation.
+    optional bool derived = 2 [default = false];
+}
+
+////////////////////////////////////////
+// Start Sync / Sync Finished
+////////////////////////////////////////
+
+// Message for StartSyncRequest/StartSyncResponse to indicate beta capabilities
+message BetaCapability {
+    optional SyncCapability capability  = 1;    // Has single bit set to indicate a capability in beta
+    optional uint32 version             = 2;    // Beta version value associated with this capability
+}
+
+// Bidirectional
+message StartSyncRequest {
+    optional SyncType sync_type = 1 [default = SYNC_TYPE_INCREMENTAL]; // need to respect this from the app.  If they request full sync make sure to give full digests.
+
+    // Protocol version to use for the sync session.
+    // Device or app may respond with START_SYNC_UNSUPPORTED_PROTOCOL_VERSION.
+    optional int32 protocol_version = 2 [default = 1];
+
+    // Included when this message is sent from the app to the device.
+    // Used by the device to identify the app when saving transaction ids.
+    optional bytes app_uuid = 3;
+
+    // Bitfield of SyncCapability.
+    // A capability can be in sync_capabilities or beta_capabilities but not in both
+    optional uint32 sync_capabilities          = 4 [default = 0];  // Bitfield for capabilities that are released
+    repeated BetaCapability beta_capabilities  = 5;                // Array of beta capabilities and their versions
+}
+
+// Bidirectional
+message StartSyncResponse {
+    message DeviceDiagnostics {
+        optional uint32 current_device_time = 1;
+
+        optional uint32 saved_device_transaction_id = 2;   // Particular device's transation ID before it started
+        optional uint32 saved_app_transaction_id = 3;      // Last transation given to us from the app in the change summary message
+        optional uint32 current_device_transaction_id = 4; // Particular device's transation ID, start at 0 and increments on each change
+    }
+
+    optional StartSyncStatus status = 1;
+
+    // Included when this message is sent from the device to the app.
+    optional DeviceDiagnostics device_diagnostics = 2;
+
+    // The latest version of the protocol supported by the app or device.
+    optional int32 supported_protocol_version = 3 [default = 1];
+
+    // Included when this message is sent from the app to the device.
+    // Used by the device to identify the app when saving transaction ids.
+    optional bytes app_uuid = 4;
+
+    // Bitfield of SyncCapability.
+    // A capability can be in sync_capabilities or beta_capabilities but not in both
+    optional uint32 sync_capabilities           = 5 [default = 0];  // Bitfield for capabilities that are released
+    repeated BetaCapability beta_capabilities   = 6;                // Array of beta capabilities and their versions
+}
+
+// Device -> App
+message SyncFinishedNotification {
+    optional SyncFinishedStatus status = 1;
+}
+
+////////////////////////////////////////
+// Collection List
+////////////////////////////////////////
+
+message CollectionList {
+    message CollectionReference {
+        required bytes uuid = 1;
+
+        // Time the collection was added or removed from the collection list. (Unix time)
+        required VersionStamp version_stamp = 2;
+
+        // When a collection is removed from a collection list, it is marked as removed but
+        // its entry remains in the collection list
+        optional bool removed = 3 [default = false];
+    }
+
+    message ActiveCollection {
+        optional bytes uuid = 1;
+        optional VersionStamp version_stamp = 2;
+    }
+
+    repeated CollectionReference collections = 1;
+    optional ActiveCollection active_collection = 2;
+}
+
+// Device -> App
+message CollectionListWriteRequest {
+    optional CollectionList collection_list = 1;
+}
+
+// App -> Device
+message CollectionListWriteResponse {
+    required WriteStatus status = 1;
+    optional CollectionList collection_list = 2;
+}
+
+////////////////////////////////////////
+// Collection Digest
+////////////////////////////////////////
+
+message CollectionDigest {
+    message CollectionReference {
+        required bytes uuid = 1;
+
+        // Other optional fields are ignored if 'deleted' is true.
+        optional bool deleted = 2 [default = false];
+
+        optional bool objects_part_modified = 3 [default = false];
+        optional VersionStamp metadata_part_version_stamp = 4;
+    }
+
+    repeated CollectionReference collections = 1;
+}
+
+// Device -> App
+message CollectionDigestWriteRequest {
+    optional CollectionDigest digest = 1; // only send digest for things that have changed in since last talking to the app_uuid's transation id
+}
+
+// App -> Device
+message CollectionDigestWriteResponse {
+    required WriteStatus status = 1;
+    optional CollectionDataRequestOp collection_read_op = 2;
+}
+
+// Device -> App
+message CollectionDigestReadRequest {
+    optional uint32 min_transaction_id = 1;     // saved app transaction id gave us in the last sync
+    optional uint32 max_transaction_id = 2;     // newly given transaction id given to us in this sync in the change summary
+
+    optional uint32 page_start = 3;
+    optional uint32 max_reference_count = 4;    // Max number of CollectionReference items to return
+}
+
+// App -> Device
+message CollectionDigestReadResponse {
+    required ReadStatus status = 1;
+    optional CollectionDigest digest = 2;
+    optional uint32 next_page_start = 3;        // Next offset to request for the remaining data
+}
+
+////////////////////////////////////////
+// Collections
+////////////////////////////////////////
+
+message Collection {
+    message MetadataPart {
+        // The time any of the fields in MetadataPart were last modified. (Unix time)
+        optional VersionStamp version_stamp = 1;
+
+        optional string name = 2;
+    }
+
+    message ObjectsPart {
+        message ObjectReference {
+            required bytes uuid = 1;
+
+            // Time the object was added or removed from the collection. (Unix time)
+            required VersionStamp version_stamp = 2;
+            // When an item is removed from a collection, it is marked as removed but
+            // its entry remains in the collection.
+            optional bool removed = 3 [default = false];
+            // Type of object referenced.
+            optional ItemDataTypes type = 4;
+        }
+
+        repeated ObjectReference objects = 1;
+    }
+
+    required bytes uuid = 1;
+    optional MetadataPart metadata_part = 2;
+    optional ObjectsPart objects_part = 3;
+}
+
+// A CollectionDataRequestOp provided in any message should trigger a CollectionReadRequest
+// to be sent by the responding side
+message CollectionDataRequestOp {
+    message CollectionID {
+        required bytes uuid = 1;
+        optional uint32 parts = 2; // Bitfield of CollectionPart.
+    }
+
+    optional CollectionID id = 1;
+    optional uint32 page_start = 2; // Offset into the collection to start from
+    optional uint32 max_reference_count = 3; // Max number of ObjectReferences to return in the Collection
+}
+
+// Device -> App
+message CollectionReadRequest {
+    optional CollectionDataRequestOp data_request = 1;
+    optional uint32 min_transaction_id = 2;  // same as in the digest message
+    optional uint32 max_transaction_id = 3;  // same as in the digest message
+}
+
+// App -> Device
+message CollectionReadResponse {
+    required ReadStatus status = 1;
+    optional Collection collection = 2;
+    optional uint32 next_page_start = 3;            // Next offset to request for the remaining data
+}
+
+// Device -> App
+message CollectionDataReadyRequest {
+    required ReadStatus status = 1;                 // If status SUCCESS, all data in the request collection has been sent.
+    optional Collection collection = 2;
+    optional uint32 next_page_start = 3;            // Next offset to request for the remaining data
+}
+
+// App -> Device
+message CollectionDataReadyResponse {
+    optional CollectionDataRequestOp next_data_request = 1;   // If set, the receiving side should send another CollectionDataReadyRequest
+}
+
+////////////////////////////////////////
+// Waypoint Digest
+////////////////////////////////////////
+
+message WaypointDigest {
+    message WaypointReference {
+        required bytes uuid = 1;
+
+        // Other optional fields are ignored if 'deleted' is true.
+        optional bool deleted = 2 [default = false];
+
+        optional VersionStamp data_part_version_stamp = 3;
+        optional VersionStamp note_part_version_stamp = 4;
+    }
+
+    repeated WaypointReference waypoints = 1;
+}
+
+// Device -> App
+message WaypointDigestWriteRequest {
+    optional WaypointDigest digest = 1;  // only send digest info for things that have changed since the last app_id's transation id
+    optional uint32 max_request_count = 2 [default = 20];   // Max number of UUIDs that should be requested
+                                                            // by a WaypointDataRequestOp at once
+    optional uint32 capabilities = 3; // Bitfield of WaypointCapability.
+}
+
+// App -> Device
+message WaypointDigestWriteResponse {
+    required WriteStatus status = 1;
+    optional WaypointDataRequestOp waypoint_read_op = 2;
+}
+
+// Device -> App
+message WaypointDigestReadRequest {
+    optional uint32 min_transaction_id = 1;     // saved app transaction id gave us in the last sync
+    optional uint32 max_transaction_id = 2;     // newly given transaction id given to us in this sync in the change summary
+
+    optional uint32 page_start = 3;
+    optional uint32 max_reference_count = 4;    // Max Number of WaypointReference items to return
+
+    optional uint32 capabilities = 5;           // Bitfield of WaypointCapability.
+}
+
+// App -> Device
+message WaypointDigestReadResponse {
+    required ReadStatus status = 1;
+    optional WaypointDigest digest = 2;
+    optional uint32 next_page_start = 3;        // Next offset to request for the remaining data
+}
+
+////////////////////////////////////////
+// Waypoints
+////////////////////////////////////////
+
+message Waypoint {
+    message DataPart {
+        optional VersionStamp version_stamp = 1;
+        optional fixed64 position = 2; // Packed lat/lon, required
+        optional string name = 3;
+        optional uint32 creation_time = 4; // Required
+        optional float  altitude = 5;
+        optional uint32 symbol = 6;
+        optional GDI.Proto.DataTypes.CoordinateSystem coordinate_system = 7 [default = WGS84];
+    }
+
+    message NotePart {
+        optional VersionStamp version_stamp = 1;
+        optional string text = 2;
+    }
+
+    required bytes uuid = 1;
+    optional DataPart data_part = 2;
+    optional NotePart note_part = 3;
+}
+
+// A WaypointReadOp provided in any message should trigger a WaypointDataRequest
+// to be sent by the responding side
+message WaypointDataRequestOp {
+    message WaypointID {
+        required bytes uuid = 1;
+        optional WaypointPart part = 2;
+    }
+
+    repeated WaypointID ids = 1;
+    optional uint32 capabilities = 2; // Bitfield of WaypointCapability.
+}
+
+// Device -> App
+message WaypointReadRequest {
+    optional WaypointDataRequestOp data_request = 1;
+}
+
+// App -> Device
+message WaypointReadResponse {
+    required ReadStatus status = 1;
+    repeated Waypoint waypoints = 2;
+}
+
+// Device -> App
+message WaypointDataReadyRequest {
+    required ReadStatus status = 1;                 // If status SUCCESS, all waypoints that were requested and valid have been sent.
+    repeated Waypoint waypoints = 2;
+}
+
+// App -> Device
+message WaypointDataReadyResponse {
+    optional WaypointDataRequestOp next_data_request = 1;   // If set, the receiving side should send another WaypointDataReadyRequest
+}
+
+////////////////////////////////////////
+// Active Line Digest
+////////////////////////////////////////
+
+message ActiveLineDigest {
+    message ActiveLineReference {
+        // Other optional fields are ignored if 'valid' is false.
+        required ActiveLineType active_line_type = 1;
+        required bool valid = 2 [default = false];
+
+        optional bytes uuid = 3;
+        optional LineType line_type = 4;
+        optional uint32 point_cnt = 5;  // number of points in the line or in the case that line_type is a LINE_TYPE_TRACBACK the point count is where the
+                                        // track back started in the current recording
+        optional bool reverse = 6 [default = false]; // should this object be navigated in reverse
+        optional uint32 next_navigation_point = 7; // the index of the point in the active navigation that we are navigating to next
+    }
+
+    repeated ActiveLineReference lines = 1;
+}
+
+// Device -> App
+message ActiveLineDigestWriteRequest {
+    optional ActiveLineDigest digest = 1;
+    optional uint32 capabilities = 2;           // Bitfield of LineCapability.
+}
+
+// App -> Device
+message ActiveLineDigestWriteResponse {
+    required WriteStatus status = 1;
+    optional LineDataRequestOp line_read_op = 2;
+}
+
+////////////////////////////////////////
+// Line Digest
+////////////////////////////////////////
+
+message LineDigest {
+    message LineReference {
+        required bytes uuid = 1;
+        required LineType line_type = 2;
+
+        // Other optional fields are ignored if 'deleted' is true.
+        optional bool deleted = 3 [default = false];
+
+        optional VersionStamp summary_part_version_stamp = 4;
+        optional VersionStamp stat_part_version_stamp = 5;
+
+        // only used in gpx tracks
+        optional VersionStamp display_part_version_stamp = 6;
+
+        // only used in FIT products
+        optional VersionStamp sport_part_version_stamp = 7;
+
+        // points only used in tracks
+        optional VersionStamp point_part_version_stamp = 8;
+    }
+
+    repeated LineReference lines = 1;
+}
+
+// Device -> App
+message LineDigestWriteRequest {
+    optional LineDigest digest = 1;
+    optional uint32 capabilities = 2;           // Bitfield of LineCapability.
+}
+
+// App -> Device
+message LineDigestWriteResponse {
+    required WriteStatus status = 1;
+    optional LineDataRequestOp line_read_op = 2;
+}
+
+// Device -> App
+message LineDigestReadRequest {
+    optional uint32 min_transaction_id = 1;
+    optional uint32 max_transaction_id = 2;
+
+    optional uint32 page_start = 3;
+    optional uint32 max_reference_count = 4;    // Max number of LineReference items to return
+
+    optional uint32 capabilities = 5;           // Bitfield of LineCapability.
+}
+
+// App -> Device
+message LineDigestReadResponse {
+    required ReadStatus status = 1;
+    optional LineDigest digest = 2;
+    optional uint32 next_page_start = 3;        // Next offset to request for the remaining data
+}
+
+////////////////////////////////////////
+// Lines
+////////////////////////////////////////
+
+message Line {
+    message PointPart {
+
+        //LINE_CAPABILITY_BASIC = 0x00;
+        optional VersionStamp version_stamp = 1;
+        repeated fixed64  generic_positions = 2; // Lat/lon pairs scposn
+
+        //LINE_CAPABILITY_GENERIC_POINT_DATA = 0x10;
+        repeated float  altitudes  = 3; // float array meters, invalid is (float)GRM_INFINITY
+        repeated uint32 timestamps = 4; // uint32 array timestamps in UNIX Epoch, invalid is GRM_INV_DATE_TIME, could start at 0 or be a timestamp
+        optional bytes  heart_rates = 5; // uint8 array beats per minute, invalid is 0xFF
+        optional bytes  cadences = 6;   // uint8 array revolutions per minute, invalid is 0xFF
+        repeated float  temperatures = 7; // float array degrees celsius. invalid is (float)GRM_INFINITY
+        repeated float  speeds = 8; // float array meters per second, invalid is (float)GRM_INFINITY
+        optional uint32 point_offset = 9;
+
+        //LINE_CAPABILITY_NAME_POINT = 0x20;
+        repeated fixed64 named_point_positions = 10; // Lat/lon pairs scposn
+        repeated float  named_point_altitudes = 11; // float array meters
+        repeated string  named_point_strings = 12; // array of strings for each point UTF-8
+        optional uint32 named_point_offset = 13;
+
+        //LINE_CAPABILITY_NAME_POINT_ICONS = 0x01;
+        // named_point_icon_support
+        repeated uint32  named_point_icons = 14; // uint32 array, symbols for each named point
+
+        //LINE_CAPABILITY_NAME_POINT_FIT = 0x02;
+        // named_point_fit_support
+        repeated uint32  named_point_fit_types = 15; // uint32 array, FIT_COURSE_POINT for each point
+        repeated uint32  named_point_fit_message_indexes = 16; // uint32 array, FIT_MESSAGE_INDEX for each point
+        repeated float   named_point_distances = 17; // float array, hold distance along course	in meters
+
+        //LINE_CAPABILITY_START_FLAGS = 0x04
+        repeated bool start_flag = 18; // boolean array to indicate the begining of a segment
+
+        //LINE_CAPABILITY_MARINE_WATER_DATA = 0x08
+        repeated float water_depth = 19; // float array in meters
+        repeated float water_temperature = 20; // float array in degrees celsius
+
+        optional GDI.Proto.DataTypes.CoordinateSystem coordinate_system = 21 [default = WGS84]; // The datum ID for all points in line
+    }
+
+    message SummaryPart {
+        optional VersionStamp version_stamp = 1;
+        optional string name = 2;
+        optional uint32 creation_time = 3;
+    }
+
+    message StatPart {
+        optional VersionStamp version_stamp = 1;
+        optional float distance = 2; // meters
+        optional float total_ascent = 3; // meters
+        optional float total_descent = 4; // meters
+        optional uint32 timer_time = 5; // seconds
+        optional uint32 elapsed_time = 6; // seconds
+        optional uint32 moving_time = 7; // seconds
+        optional uint32 stopped_time = 8; // seconds
+        optional float moving_speed = 9; // meters per second
+        optional float max_speed = 10; // meters per second
+        optional float max_elevation = 11; // meters
+        optional float min_elevation = 12; // meters
+        optional uint32 calories = 13; // calories
+        optional uint32 avg_heart_rate = 14; // beats per minute
+        optional uint32 avg_cadence = 15; // revolutions per minute
+        optional float avg_speed = 16; // meters per second
+    }
+
+    message DisplayPart {
+        optional VersionStamp version_stamp = 1;
+        optional uint32 color = 2;
+    }
+
+    message SportPart {
+        optional VersionStamp version_stamp = 1;
+        optional uint32 sport = 2; //FIT_SPORT enum, invalid is FIT_SPORT_INVALID
+        optional uint32 sub_sport = 3;// FIT_SUB_SPORT enum, invalid is FIT_SUB_SPORT_INVALID
+    }
+
+
+    required bytes uuid = 1;
+    required LineType line_type = 2;
+    optional uint32 unit_id = 3; // Unit ID of the device that created this line
+    optional SummaryPart summary_part = 4; //LINE_PART_SUMMARY
+    optional StatPart stat_part = 5; // LINE_PART_STAT
+    optional DisplayPart display_part = 6; // LINE_PART_DISPLAY
+    optional SportPart sport_part = 7; // LINE_PART_SPORT
+    optional PointPart point_part = 8; // LINE_PART_POINTS
+}
+
+// A LineReadOp provided in any message should trigger a LineDataReadyRequest
+// to be sent by the responding side
+message LineDataRequestOp {
+    required bytes uuid = 1;
+    optional LinePart part = 2;
+
+    optional uint32 point_offset = 3;
+    optional uint32 max_point_count = 4 [default = 10];
+
+    optional uint32 capabilities = 5; // Bitfield of LineCapability.
+}
+
+// Device -> App
+message LineReadRequest {
+    optional LineDataRequestOp data_request = 1;
+}
+
+// App -> Device
+message LineReadResponse {
+    required ReadStatus status = 1;
+    optional Line line = 2;
+    optional uint32 next_point_offset = 3;
+}
+
+// Device -> App
+message LineDataReadyRequest {
+    required ReadStatus status = 1;                 // If status SUCCESS, all lines that were requested and valid have been sent.
+    optional Line line = 2;
+    optional uint32 next_point_offset = 3;
+}
+
+// App -> Device
+message LineDataReadyResponse {
+    optional LineDataRequestOp next_data_request = 1;   // If set, the receiving side should send another LineDataReadyRequest
+}
+
+////////////////////////////////////////
+// Change Summary
+////////////////////////////////////////
+
+// Device -> App
+message ChangeSummaryRequest {
+    optional uint32 starting_transaction_id = 1;   // the last transation_id from this app_id we saved.  same as the min_transation_id
+
+    optional uint32 waypoint_capabilities = 2; // Bitfield of WaypointCapability.
+    optional uint32 line_capabilities = 3; // Bitfield of LineCapability.
+
+}
+
+// App -> Device
+message ChangeSummaryResponse {
+    optional uint32 ending_transaction_id = 1;  // store this per app_id
+
+    optional bool collections_modified = 3 [default = false];
+    optional bool waypoints_modified = 4 [default = false];
+    optional bool lines_modified = 5 [default = false];
+}

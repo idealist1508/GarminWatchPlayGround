@@ -1,0 +1,29 @@
+namespace Garmin.Ble.Lib;
+
+public enum ServiceType
+{
+    GFDI = 1,
+    NFC = 2,
+    HEALTH_SDK = 3,
+    REGISTRATION = 4,
+    CONNEXT = 5,
+    REAL_TIME_HR = 6,
+    REAL_TIME_STEPS = 7,
+    REAL_TIME_CALORIES = 8,
+    REAL_TIME_FLOORS = 9,
+    REAL_TIME_INTENSITY = 10,
+    REAL_TIME_DUMMY = 11,
+    REAL_TIME_HRV = 12,
+    REAL_TIME_STRESS = 13,
+
+    //REAL_TIME_BMX_RAW = 14,
+    ECHO = 15,
+    REAL_TIME_ACCELEROMETER = 16,
+    REAL_TIME_SPAM = 17,
+
+    //REAL_TIME_BMX_RAW = 18,
+    REAL_TIME_SPO2 = 19,
+    REAL_TIME_BODY_BATTERY = 20,
+    REAL_TIME_RESPIRATION = 21,
+    KEEP_ALIVE = 22
+}

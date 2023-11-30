@@ -1,0 +1,147 @@
+syntax = "proto2";
+package GDI.Proto.IncidentDetection;
+
+import "GDIDataTypes.proto";
+
+option optimize_for = LITE_RUNTIME;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIIncidentDetectionProto";
+
+message IncidentDetectionService {
+    optional UpdateDeviceOwnerRequest update_device_owner_request = 1;
+    optional UpdateDeviceOwnerResponse update_device_owner_response = 2;
+    optional UpdateIncidentContactsRequest update_incident_contacts_request = 3;
+    optional UpdateIncidentContactsResponse update_incident_contacts_response = 4;
+    optional IncidentDetectedRequest incident_detected_request = 5;
+    optional IncidentDetectedResponse incident_detected_response = 6;
+    optional CancelIncidentRequest cancel_incident_request = 7;
+    optional CancelIncidentResponse cancel_incident_response = 8;
+    optional IncidentStatusNotification incident_status_notification = 9;
+    optional IncidentVideoNotification incident_video_notification = 10;
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ * Sent after each connection to a device and whenever the values change on Connect or by GCM.
+ */
+message UpdateDeviceOwnerRequest {
+    optional string name = 1;
+    optional string location = 2;
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ */
+message UpdateDeviceOwnerResponse {
+    enum ResponseStatus {
+        UNKNOWN = 0;
+        OK = 100;
+        ERROR = 200;
+    }
+    required ResponseStatus status = 1;
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ * An empty list signifies the remote garmin device should delete all.
+ */
+message UpdateIncidentContactsRequest {
+    repeated Contact contact = 1;
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ */
+message UpdateIncidentContactsResponse {
+    enum ResponseStatus {
+        UNKNOWN = 0;
+        OK = 100;
+        ERROR = 200;
+    }
+    required ResponseStatus status = 1;
+}
+
+/**
+ * Not enforced, but either the telephone or the email lists should have data.
+ */
+message Contact {
+    required string id = 1;
+    optional string name = 2;
+    repeated string telephone = 3;
+    repeated string email_address = 4;
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ */
+message IncidentDetectedRequest {
+    enum RequestType {
+        UNKNOWN = 0;
+        CYCLING_INCIDENT = 1;
+        ASSISTANCE_NEEDED = 2;
+    }
+
+    required GDI.Proto.DataTypes.ScPoint position = 1;
+
+    /**
+     * The number of seconds the recipient of this message should delay before notifying the contact persons. The default
+     * is zero (0). If the value is greater than zero, this gives the user an opportunity to cancel the incident.
+     */
+    required uint32 seconds_to_delay_before_notifying_contact_persons = 2 [default = 0];
+
+    optional RequestType type = 3;
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ */
+message IncidentDetectedResponse {
+    enum ResponseStatus {
+        UNKNOWN = 0;
+        TIMER_STARTED = 100;
+        ERROR = 200;
+    }
+    required ResponseStatus status = 1;
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ * No response message is returned.
+ */
+message IncidentStatusNotification {
+    enum Status {
+        UNKNOWN = 0;
+        SENT_NOTIFICATIONS_TO_CONTACTS_SUCCESS = 1;
+        SENT_NOTIFICATIONS_TO_CONTACTS_FAILURE = 2;
+        FINISHED = 3;
+    }
+    required Status status = 1;
+}
+
+/**
+ * Message may be sent by either GCM or REMOTE GARMIN DEVICE.
+ * Handles the "cancel timer" and the "I Am Okay" use-cases.
+ */
+message CancelIncidentRequest {
+}
+
+/**
+ * Message direction can be both ways.
+ */
+message CancelIncidentResponse {
+    enum ResponseStatus {
+        UNKNOWN = 0;
+        SUCCESS = 100;
+        ERROR = 200;
+    }
+    required ResponseStatus status = 1;
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ * Notifies the incident video has been prepared.
+ */
+message IncidentVideoNotification {
+    // empty
+}

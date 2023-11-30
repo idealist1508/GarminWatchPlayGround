@@ -1,0 +1,181 @@
+syntax = "proto2";
+package GDI.Proto.LiveTrack;
+
+import "GDIDataTypes.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDILiveTrackProto";
+option optimize_for = LITE_RUNTIME;
+
+/*----------------------------------------------------------
+                        ENUMERATIONS
+----------------------------------------------------------*/
+/* Copied from CSM.Proto.Tracker */
+enum DeviceType {
+    PND          = 0;
+    GTU10        = 1;
+    EMAIL        = 2;
+    FACEBOOK     = 3;
+    TWITTER      = 4;
+    MYGARMIN     = 5;
+    MYGARMINUSER = 6;
+    MYGTUUSER    = 7;
+    FITNESSAPP   = 8;
+    GROUPTRACK   = 9;
+    CONNECTION   = 10;
+    STRAVA       = 11;
+    /* WEARABLE     = 12; */
+}
+
+/*----------------------------------------------------------
+                          MESSAGES
+----------------------------------------------------------*/
+message FacebookCredentials {
+    required string auth_token = 1;
+}
+
+message LiveTrackService {
+    optional ShareMetaConfigurationNotification  share_meta_config_notification = 1;
+    optional ShareSocialCredentialsNotification  share_social_notification      = 2;
+
+    optional StartRequest                        start_request                  = 3;
+    optional StartResponse                       start_response                 = 4;
+
+    optional StopNotification                    stop_notification              = 5;
+
+    optional AutoStartNotification               auto_start_notification        = 6;
+
+    optional StatusNotification                  status_notification            = 7;
+
+    optional ConsentChangedNotification          consent_changed_notification   = 8;
+}
+
+enum SessionType {
+    STANDARD        = 0;
+    SOS             = 1;
+    INCIDENT_DETECT = 2;
+}
+
+message Session {
+    required string  id    = 1;
+    required string  token = 2;
+}
+
+message SessionGroup {
+    required SessionType session_type         = 1;
+    required string      name                 = 2;
+    required uint64      start_unix_timestamp = 3;
+    required uint64      duration_s           = 4;
+    repeated Session     sessions             = 5;
+}
+
+/*----------------------------------------------------------
+GCM <--> device
+----------------------------------------------------------*/
+message AutoStartNotification {
+    required bool is_enabled = 1;
+}
+
+/*----------------------------------------------------------
+GCM -> device
+---------------------------------------------------------- */
+message ConsentChangedNotification {
+    optional bool has_feature_consent = 1;
+    optional bool has_strava_consent  = 2;
+}
+
+/*----------------------------------------------------------
+GCM -> device
+----------------------------------------------------------*/
+message ShareMetaConfigurationNotification {
+    optional GDI.Proto.DataTypes.Locale    locale   = 1;
+
+    /*----------------------------------------------------------
+    This is used for setting the language enum for emergency
+    notifications.
+    ----------------------------------------------------------*/
+    optional GDI.Proto.DataTypes.Languages language = 2;
+
+    /*----------------------------------------------------------
+    This is used whenever the GroupTrack enabled flag is
+    toggled for LiveTrack publishers.  Note that this flag is
+    for creating new LiveTrack sessions and NOT for GroupTrack
+    subscribers.
+    ----------------------------------------------------------*/
+    optional bool grouptrack_sharing_enabled = 3;
+
+    /*----------------------------------------------------------
+    This is used whenever the extend LiveTrack flag is toggled.
+    ----------------------------------------------------------*/
+    optional bool extend_livetrack_enabled = 4;
+
+    /*----------------------------------------------------------
+    This is used for toggling the email recipients flag for new
+    LiveTrack sessions.
+    ----------------------------------------------------------*/
+    optional bool email_sharing_enabled = 5;
+
+    /*----------------------------------------------------------
+    This is used to toggle Twitter sharing for new LiveTrack
+    sessions.
+    ----------------------------------------------------------*/
+    optional bool twitter_sharing_enabled = 6;
+
+}
+
+/*----------------------------------------------------------
+GCM -> device
+----------------------------------------------------------*/
+message ShareSocialCredentialsNotification {
+    optional FacebookCredentials facebook                = 1;
+    optional TwitterCredentials  twitter                 = 2;
+    optional bool                strava_beacon_connected = 3;
+}
+
+/*----------------------------------------------------------
+GCM <--> device
+----------------------------------------------------------*/
+message StartRequest {
+    required SessionGroup session    = 1;
+    required TrackerId    tracker_id = 2;
+}
+
+message StartResponse {
+    enum Status {
+        ERROR                     = 0;  /* Catch all. Hopefully won't send */
+        ERROR_ALREADY_IN_PROGRESS = 1;
+        SUCCESS                   = 2;
+    }
+    required Status start_status = 1;
+}
+
+/*----------------------------------------------------------
+GCM <- device
+----------------------------------------------------------*/
+message StatusNotification {
+    optional SessionGroup session    = 1;
+    optional TrackerId    tracker_id = 2;
+}
+
+/*----------------------------------------------------------
+GCM <--> device
+----------------------------------------------------------*/
+message StopNotification {
+    repeated string  session_ids                  = 1;
+    optional uint64  extended_viewable_duration_s = 2;
+}
+
+/* Copied from CSM.Proto.Tracker */
+message TrackerId {
+    optional string      tracker_id  = 1;
+    optional string      unit_id     = 2;  /* NOT the unit id. This is really an "installation id" */
+    optional DeviceType  device_type = 3;
+    optional string      nickname    = 4;  /* garmin acount name */
+}
+
+message TwitterCredentials {
+    required string user_token  = 1;
+    required string user_secret = 2;
+    required string app_id      = 3;
+    required string app_secret  = 4;
+}

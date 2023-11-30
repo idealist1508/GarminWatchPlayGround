@@ -1,0 +1,28 @@
+syntax = "proto2";
+package GDI.Proto.WaypointTransfer;
+
+import "GDIDataTypes.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIWaypointTransferProto";
+option optimize_for = LITE_RUNTIME;
+
+message WaypointTransferService {
+    optional WaypointRequest waypoint_request = 1;
+    optional WaypointResponse waypoint_response = 2;
+}
+
+message WaypointRequest {
+    required GDI.Proto.DataTypes.ScPoint location = 1;
+    optional string name = 2;
+}
+
+message WaypointResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        ALREADY_EXISTS = 2;
+        ERROR = 3;
+    }
+    required ResponseStatus status = 1;
+}

@@ -1,0 +1,329 @@
+syntax = "proto2";
+package GDI.Proto.InReachTracking;
+
+import "GDIDataTypes.proto";
+import "GDICore.proto";
+import "GDIGenericItemTransfer.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIInReachTracking";
+option optimize_for = LITE_RUNTIME;
+
+message InReachTrackingService {
+
+    optional TrackingStateRequest tracking_state_request = 1;
+    optional TrackingStateResponse tracking_state_response = 2;
+
+    optional StartTrackingRequest start_tracking_request = 3;
+    optional StartTrackingResponse start_tracking_response = 4;
+
+    optional StopTrackingRequest stop_tracking_request = 5;
+    optional StopTrackingResponse stop_tracking_response = 6;
+
+    optional CurrentSettingsRequest current_settings_request = 7;
+    optional CurrentSettingsResponse current_settings_response = 8;
+
+    optional LegalUintListValuesRequest legal_uint_list_values_request = 9;
+    optional LegalUintListValuesResponse legal_uint_list_values_response = 10;
+
+    optional ChangeUintListSettingRequest change_uint_list_setting_request = 11;
+    optional ChangeUintListSettingResponse change_uint_list_setting_response = 12;
+
+    optional TrackingSubscribeRequest tracking_subscribe_request = 13;
+    optional TrackingSubscribeResponse tracking_subscribe_response = 14;
+
+    optional TrackingStatusNotification tracking_status_notification = 15;
+}
+
+////////////////////////////////////////////////
+// Enumerations
+////////////////////////////////////////////////
+
+enum TrackingState {
+    TRACKING_STATE_OFF       = 1; // The device is not in any inReach tracking mode.
+    TRACKING_STATE_NORMAL    = 2; // The device is in normal tracking mode.
+    TRACKING_STATE_EMERGENCY = 3; // The device is in emergency tracking mode (aka SOS).
+}
+
+enum SettingError {
+    SETTING_ERROR_OK                   = 1; // No error
+    SETTING_ERROR_GENERIC              = 2; // Generic error
+    SETTING_ERROR_UNKNOWN_SETTING      = 3; // Setting identifier is unknown or invalid.
+    SETTING_ERROR_UNAVAILABLE_SETTING  = 4; // Setting is currently not applicable or otherwise not available to the user.
+    SETTING_ERROR_ILLEGAL_VALUE        = 5; // Setting cannot be set to the given value.
+}
+
+// Setting where the user must choose from a list of values which are unsigned integers.
+enum UintListSetting {
+    MOVING_INTERVAL  = 1; // How often to send track points when the user is moving (seconds)
+    RESTING_INTERVAL = 2; // How often to send track points when the user is not moving (seconds)
+    RESTING_DISTANCE = 3; // Distance the user must exceed to be considered in motion (meters)
+}
+
+// Special values for settings which are otherwise just unsigned integers.
+enum UintListSettingSpecialValue {
+    MOVING_INTERVAL_OFF             = 1; // Track points are not sent
+    RESTING_INTERVAL_SAME_AS_MOVING = 2; // Resting interval setting will match moving interval setting
+    RESTING_DISTANCE_OFF            = 3; // Resting interval is not used
+}
+
+////////////////////////////////////////////////
+// Extensions
+////////////////////////////////////////////////
+
+message TrackingPointInfo {
+    enum PointType {
+        START  = 1; // First point in an inReach tracking session
+        NORMAL = 2; // Point not at the start or end of an inReach tracking session.
+        STOP   = 3; // Last point in an inReach tracking session
+    }
+
+    optional TrackingState state = 1; // Either TRACKING_STATE_NORMAL or TRACKING_STATE_EMERGENCY
+    optional PointType type      = 2;
+}
+
+extend GDI.Proto.Core.LocationData {
+    optional TrackingPointInfo locationdata_inreach_tracking_ext = 1000;
+}
+
+////////////////////////////////////////////////
+// Tracking State
+////////////////////////////////////////////////
+
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Sent by the app to the device to determine
+ whether or not the device is in inReach tracking mode.
+----------------------------------------------------------*/
+message TrackingStateRequest {
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message TrackingStateResponse {
+    enum Status {
+        OK              = 1; // No error
+        GENERIC_ERROR   = 2; // Generic error
+    }
+
+    required Status status                         = 1;
+    optional TrackingState tracking                = 2;
+
+    // Setting values which are currently in effect (if currently tracking).
+    // It is possible for these to be different than
+    // the persisted values for these settings because
+    // the Explore web site can force an inReach device
+    // to enter tracking mode using arbitrary values
+    // for the settings.
+    optional TrackingSettings settings             = 3;
+
+    // UUID of current inReach tracking session (if currently tracking)
+    optional GDI.Proto.DataTypes.UUID session_uuid = 4;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Tell the device to enter inReach tracking mode.
+ Starting inReach tracking mode means that the user's
+ current location will be periodically uploaded over
+ Iridium to the Explore web site.
+----------------------------------------------------------*/
+message StartTrackingRequest {
+
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message StartTrackingResponse {
+    enum Status {
+        OK               = 1; // No error
+        GENERIC_ERROR    = 2; // Generic error
+        ALREADY_TRACKING = 3; // The device was already tracking when StartTrackingRequest was received.
+        NOT_ACTIVATED    = 4; // Device needs to be activated before inReach tracking can be used.
+    }
+
+    required Status status = 1;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Tell the device to exit inReach tracking mode.
+ If the device is in emergency tracking mode,
+ this request will fail and the device will remain
+ in emergency tracking mode.
+----------------------------------------------------------*/
+message StopTrackingRequest {
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message StopTrackingResponse {
+    enum Status {
+        OK               = 1; // No error
+        GENERIC_ERROR    = 2; // Generic error
+        STOP_DISALLOWED  = 3; // Tracking cannot be stopped. This will occur if device is in emergency mode and a StopTrackingRequest is sent.
+    }
+
+    required Status status = 1;
+}
+
+////////////////////////////////////////////////
+// Settings
+////////////////////////////////////////////////
+
+message TrackingSettings {
+    required uint32 settings_version               = 1;
+    repeated UintListSettingValue uint_list_values = 2;
+}
+
+message UintListSettingValue {
+    required UintListSetting setting             = 1;
+    optional uint32 value                        = 2;
+    optional UintListSettingSpecialValue special = 3;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Obtain the current (persisted) settings from the device.
+ Note that it is possible for the device to be in
+ inReach tracking mode with settings other than this
+ because the Explore web site can force an
+ inReach device to enter tracking mode using arbitrary
+ values for the settings.
+ In which case, the settings used in the inReach
+ tracking session are made available both in the
+ TrackingStateResponse and the TrackingStatusNotification.
+----------------------------------------------------------*/
+message CurrentSettingsRequest {
+    required uint32 max_settings_version = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message CurrentSettingsResponse {
+    required SettingError status       = 1;
+    optional TrackingSettings settings = 2;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Request the legal values for a UintListSetting
+ For an example, an app would send this request
+ so it could populate a listbox used to change
+ the value of this setting.
+----------------------------------------------------------*/
+message LegalUintListValuesRequest {
+    required UintListSetting setting = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message LegalUintListValuesResponse {
+    required SettingError status                              = 1;
+    optional UintListSetting setting                          = 2;
+    repeated uint32 legal_values                              = 3;
+    repeated UintListSettingSpecialValue legal_special_values = 4;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Change the value of a UintListSetting (see UintListSetting
+ enum).
+----------------------------------------------------------*/
+message ChangeUintListSettingRequest {
+    required UintListSettingValue value = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+
+ Indicates whether the settings change succeeded or not.
+----------------------------------------------------------*/
+message ChangeUintListSettingResponse {
+    required SettingError status = 1;
+}
+
+////////////////////////////////////////////////
+// Notifications
+////////////////////////////////////////////////
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Sent to start or stop receiving tracking notifications
+----------------------------------------------------------*/
+message TrackingSubscribeRequest {
+    optional bool want_status = 1 [default = false]; // TrackingStatusNotification
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message TrackingSubscribeResponse {
+    enum Status {
+        OK               = 1; // No error
+        GENERIC_ERROR    = 2; // Generic error
+    }
+
+    required Status status = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+
+ Sent by the device to the app whenever the TrackingStatus
+ is changed. Only sent if the app is subscribed with
+ "want_status" = true.
+----------------------------------------------------------*/
+message TrackingStatusNotification {
+    required TrackingState tracking                = 1;
+
+    // Setting values which are currently in effect (if currently tracking).
+    // It is possible for these to be different than the persisted values
+    // for these settings because the Explore web site can force an
+    // inReach device to enter tracking mode using arbitrary values
+    // for the settings.
+    optional TrackingSettings settings             = 2;
+
+    // UUID of current inReach tracking session (if currently tracking)
+    optional GDI.Proto.DataTypes.UUID session_uuid = 3;
+}
+
+////////////////////////////////////////////////
+// Generic Item Transfer support
+////////////////////////////////////////////////
+
+extend GDI.Proto.GenericItemTransfer.DataTypeConfig {
+    optional DataTypeConfigExt config_ext = 101;
+}
+
+extend GDI.Proto.GenericItemTransfer.GenericItemReference {
+    optional GenericItemReferenceExt reference_ext = 101;
+}
+
+message TrackingPointDateRangeQuery {
+    optional fixed32 date_begin                    = 1; // UNIX time, start of inclusive date range. If omitted, the "beginning of time" is used.
+    optional fixed32 date_end                      = 2; // UNIX time, end of inclusive date range. If omitted, the current time is used.
+    optional uint32 point_limit                    = 3; // Limit the total number of tracking points returned.
+    optional GDI.Proto.DataTypes.UUID session_uuid = 4; // Only include the tracking points from this session.
+}
+
+message DataTypeConfigExt {
+    optional TrackingPointDateRangeQuery point_date_range = 1; // Used in ItemListRequest
+}
+
+message GenericItemReferenceExt {
+    optional GDI.Proto.Core.LocationData tracking_point = 1; // Includes TrackingPointInfo extension
+}

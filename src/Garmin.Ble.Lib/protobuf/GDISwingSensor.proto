@@ -1,0 +1,58 @@
+syntax = "proto2";
+package GDI.Proto.SwingSensor;
+
+import "GDISwingSensorClubs.proto";
+import "GDISwingSensorMetrics.proto";
+import "GDISwingSensorUserSettings.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDISwingSensor";
+option optimize_for = LITE_RUNTIME;
+
+// Signals a new swing was detected and its data is ready for request
+message NewSwingNotification {
+    required uint32 id = 1;
+    required uint32 size = 2;
+}
+
+message SwingSensorConnectedNotification {}
+message SwingSensorDisconnectedNotification {}
+
+message SwingSensorService {
+
+    optional NewSwingNotification new_swing_notification = 1;
+
+// Deprecated, do not renumber or reuse these values
+//
+//    optional SwingSensorMetrics.SwingMetricsRequest swing_metrics_request = 2;
+//    optional SwingSensorMetrics.SwingMetricsResponse swing_metrics_response = 3;
+
+    optional SwingSensorClubs.GetClubListRequest get_club_list_request = 4;
+    optional SwingSensorClubs.GetClubListResponse get_club_list_response = 5;
+
+// Deprecated, do not renumber or reuse these values
+//
+//    optional SwingSensorClubs.SetClubListRequest set_club_list_request = 6;
+//    optional SwingSensorClubs.SetClubListResponse set_club_list_response = 7;
+
+    optional SwingSensorClubs.SetActiveClubRequest set_active_club_request = 8;
+    optional SwingSensorClubs.SetActiveClubResponse set_active_club_response = 9;
+
+    optional SwingSensorUserSettings.GetUserSettingsRequest get_user_settings_request = 10;
+    optional SwingSensorUserSettings.GetUserSettingsResponse get_user_settings_response = 11;
+
+    optional SwingSensorUserSettings.SetUserSettingsRequest set_user_settings_request = 12;
+    optional SwingSensorUserSettings.SetUserSettingsResponse set_user_settings_response = 13;
+
+    optional SwingSensorConnectedNotification swing_sensor_connected_notification = 14;
+    optional SwingSensorDisconnectedNotification swing_sensor_disconnected_notification = 15;
+
+// Deprecated, do not renumber or reuse these values
+//
+//    optional TimeRequest time_request = 16;
+//    optional TimeResponse time_response = 17;
+
+    optional SwingSensorMetrics.SwingMetricsNotification swing_metrics_notification = 18;
+
+    optional SwingSensorClubs.ClubListChangedNotification club_list_changed_notification = 19;
+}

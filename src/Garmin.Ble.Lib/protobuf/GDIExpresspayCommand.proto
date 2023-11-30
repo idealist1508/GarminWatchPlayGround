@@ -1,0 +1,32 @@
+syntax = "proto2";
+package GDI.Proto.ExpresspayCommand;
+
+// FOR JAVA (Android) COMPILATION ONLY
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIExpresspayCommand";
+option optimize_for = LITE_RUNTIME;
+
+message ExpresspayCommandService {
+	optional ExpresspayRequest request = 1;
+	optional ExpresspayResponse response = 2;
+}
+
+message ExpresspayRequest
+{
+    enum ControlCommandType
+	{
+		UNKNOWN_CONTROL_COMMAND_TYPE = 0;
+		APDU_COMMAND = 1;
+		CONNECT = 2;
+		DISCONNECT = 3;
+		RESET = 4;
+		QUREY = 5;
+	}
+	optional ControlCommandType ControlCommand = 1;
+	optional bytes APDUCommandData = 2;
+}
+
+message ExpresspayResponse
+{
+	required bytes Data = 1;
+}

@@ -1,0 +1,47 @@
+syntax = "proto2";
+package GDI.Proto.SwingSensorClubs;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDISwingSensorClubs";
+option optimize_for = LITE_RUNTIME;
+
+message Club {
+    required uint64 timestamp = 1; // Unix timestamp when club was created
+    required uint64 club_id = 2;
+    required uint32 club_type = 3; // See FIT SDK golf_club type for valid values
+    required string club_nickname = 4; // Never more than TBD characters
+    required uint32 shaft_flex = 5; // See FIT SDK shaft_flex type for valid values
+    required float length_offset = 6; // In inches
+    required float club_loft = 7; // In degrees
+    required float club_lie = 8; // In degrees
+}
+
+message ClubListChangedNotification {}
+
+message GetClubListRequest {}
+message GetClubListResponse {
+
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        NO_REMOTE_DEVICE = 2;
+    }
+
+    required ResponseStatus status = 1;
+    optional uint64 active_club_id = 2;
+    repeated Club clubs = 3;
+}
+
+message SetActiveClubRequest {
+    required uint64 club_id = 1;
+}
+message SetActiveClubResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        INVALID_CLUB_ID = 2;
+        NO_REMOTE_DEVICE = 3;
+    }
+
+    required ResponseStatus status = 1;
+}

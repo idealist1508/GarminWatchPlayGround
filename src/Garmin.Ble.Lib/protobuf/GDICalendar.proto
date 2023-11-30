@@ -1,0 +1,49 @@
+syntax = "proto2";
+package GDI.Proto.Calendar;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDICalendarProto";
+option optimize_for = LITE_RUNTIME;
+
+message CalendarService {
+    optional CalendarEventsRequest calendar_events_request = 1;
+    optional CalendarEventsResponse calendar_events_response = 2;
+}
+
+message CalendarEventsRequest {
+    optional uint64 start_date = 1;                                  // Start date/time as Unix time (epoch)
+    optional uint64 end_date = 2;                                    // End date/time as Unix time (epoch)
+    optional bool   include_organizer = 3       [default = false];
+    optional bool   include_title = 4           [default = true];
+    optional bool   include_location = 5        [default = true];
+    optional bool   include_description = 6     [default = false];
+    optional bool   include_start_date = 7      [default = true];    // Start date/time of the meeting
+    optional bool   include_end_date = 8        [default = false];   // End date/time of the meeting
+    optional bool   include_all_day = 9         [default = false];
+    optional uint32 max_organizer_length = 10   [default = 0];       // length in bytes, 0 = no limit, length does not include null terminator
+    optional uint32 max_title_length = 11       [default = 0];       // length in bytes, 0 = no limit, length does not include null terminator
+    optional uint32 max_location_length = 12    [default = 0];       // length in bytes, 0 = no limit, length does not include null terminator
+    optional uint32 max_description_length = 13 [default = 0];       // length in bytes, 0 = no limit, length does not include null terminator
+    optional uint32 max_events = 14             [default = 100];
+}
+
+message CalendarEventsResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        INVALID_DATE_RANGE = 2;
+    }
+    optional ResponseStatus status = 1;
+    repeated CalendarEvent events = 2;
+}
+ 
+message CalendarEvent {
+    optional string organizer = 1;
+    optional string title = 2;
+    optional string location = 3;
+    optional string description = 4;
+    optional uint64 start_date = 5;   // Start date/time as Unix time (epoch)
+    optional uint64 end_date = 6;     // End date/time as Unix time (epoch)
+    optional bool   all_day = 7;
+    repeated uint32 reminder_time_in_secs = 8; // seconds before start date in descending order
+}

@@ -1,9 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ble.Interfaces\Ble.Interfaces.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.19.4" />
+    <PackageReference Include="Grpc.Tools" Version="2.44.0-pre2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NeoSmart.AsyncLock" Version="3.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+        <Protobuf Include="protobuf/*.proto" OutputDir="protobuf" CompileOutputs="false" GrpcServices="None" ProtoRoot="protobuf" />
+  </ItemGroup>
 
 </Project>

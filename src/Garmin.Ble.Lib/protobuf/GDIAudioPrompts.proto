@@ -1,0 +1,123 @@
+syntax = "proto2";
+package GDI.Proto.AudioPrompts;
+
+// FOR JAVA (Android) COMPILATION ONLY
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIAudioPromptsProto";
+option optimize_for = LITE_RUNTIME;
+
+message AudioPromptsService {
+  optional LapNotification lap_notification = 1;
+  optional AudioSettingsUpdatedNotification audio_settings_updated_notification = 2;
+  optional AudioSettingsRequest audio_settings_request = 3;
+  optional AudioSettingsResponse audio_settings_response = 4;
+  optional SpeedNotification speed_notification = 5;
+  optional PaceNotification pace_notification = 6;
+  optional HeartRateNotification heart_rate_notification = 7;
+  optional PowerNotification power_notification = 8;
+  optional SpeechNotification speech_notification = 9;
+  optional SupportedLanguagesRequest supported_languages_request = 10;
+  optional SupportedLanguagesResponse supported_languages_response = 11;
+  optional SetLanguageRequest set_language_request = 12;
+  optional SetLanguageResponse set_language_response = 13;
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ * Sent when the audio prompt settings are changed by the user in GCM. This "pokes" the device so that it will eventually send GCM the "AudioSettingsRequest".
+ */
+message AudioSettingsUpdatedNotification {
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ * Sent by device when it wants client to send its current audio prompt settings.
+ */
+message AudioSettingsRequest {
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ * Sent as a response to AudioSettingsRequest
+ */
+message AudioSettingsResponse {
+  required bool speakLaps = 1;           // True if the device should send lap data. Note phone will also ignore lap data if received when user has this turned off
+  required uint64 speedIntervalTime = 2; // Number of seconds for the speed/pace interval, 0 indicates off, 1 indicates "Lap" value
+  required uint64 hrIntervalTime = 3;    // Number of seconds for the heart rate interval, 0 indicates off, 1 indicates "Lap" value
+  optional uint64 powerIntervalTime = 4; // Number of seconds for power interval, 0 indicates off, 1 indicates "Lap" value
+  optional bool speakNavigation = 5;     // True if the device should send navigation data.
+}
+
+message LapNotification {
+  required uint32 lap_number = 1;
+  required uint64 lap_time   = 2;  // Number of seconds.
+  optional float lap_speed = 3;    // speed in meters per second
+}
+
+message SpeedNotification {
+  optional float average_speed = 1;                    // (meters per second) average speed of the activity from timer start to now
+  optional float current_speed = 2;                    // (meters per second) speed at this instant
+  optional float lap_speed = 3;                        // (meters per second) average speed of the current lap from beginning to now. 'current average lap speed'
+  required bool device_is_displaying_metric_units = 4; //
+}
+
+message PaceNotification {
+  optional uint64 average_pace = 1;                    // (seconds) average pace of the activity from timer start to now
+  optional uint64 current_pace = 2;                    // (seconds) pace at this instant
+  optional uint64 lap_pace = 3;                        // (seconds) lap pace from beginning to now. 'current average lap pace'
+}
+
+message HeartRateNotification {
+  optional uint32 bpm = 1;            // beats per minute
+  optional float zone = 2;            // example: 3.4
+  optional uint32 percentage_max = 3; // percentage of max heart rate between 0 - 100
+  optional uint32 percentage_hrr = 4; // percentage of heart rate reserve between 0 - 100
+}
+
+message PowerNotification {
+  optional uint32 average_power = 1;     // (watts)
+  optional uint32 normalized_power = 2;  // (watts)
+  optional uint32 lap_power = 3;         // (watts)
+}
+
+message SpeechNotification {
+  optional SpeechType speech_type = 1;
+  optional string text_to_speak = 2;
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ */
+message SetLanguageRequest {
+    required Language lang = 1;
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ */
+message SetLanguageResponse {
+    required bool success = 1; // if true, GCM TTS engine supports the language
+}
+
+message Language {
+  required string language_code = 1;  // ISO 639-1: two-character language code (example: en)
+  optional string country_code = 2;   // ISO 3166: two-character country code (example: US)
+}
+
+enum SpeechType {
+    UNKNOWN = 0;
+    NAVIGATION = 1;
+}
+
+/**
+ * Message direction is: REMOTE GARMIN DEVICE to GCM
+ */
+message SupportedLanguagesRequest {
+}
+
+/**
+ * Message direction is: GCM to REMOTE GARMIN DEVICE
+ */
+message SupportedLanguagesResponse {
+  repeated Language languages = 1;
+}

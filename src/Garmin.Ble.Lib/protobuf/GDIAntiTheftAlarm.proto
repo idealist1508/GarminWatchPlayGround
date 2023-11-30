@@ -1,0 +1,133 @@
+syntax = "proto2";
+package GDI.Proto.AntiTheftAlarm;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIAntiTheftAlarmProto";
+option optimize_for = LITE_RUNTIME;
+
+message AntiTheftAlarmService {
+    optional SettingChangeRequest           setting_change_request          = 1;
+    optional SettingChangeResponse          setting_change_response         = 11;
+    optional TriggerRequest                 trigger_request                 = 2;
+    optional TriggerResponse                trigger_response                = 3;
+    optional DisableRequest                 disable_request                 = 4;
+    optional DisableResponse                disable_response                = 5;
+    optional MovementAlertNotification      movement_alert_notification     = 6;
+    optional ResetPINRequest                reset_pin_request               = 7;
+    optional ResetPINResponse               reset_pin_response              = 8;
+    optional SettingRequest                 setting_request                 = 9;
+    optional SettingResponse                setting_response                = 10;
+    /* Value 11 is used by the SettingChangeResponse above */
+}
+
+/*----------------------------------------------------------
+GCM <-> Device
+
+From GCM: User can toggle the setting
+From Device: A notification will be shown on the phone
+whenever the user toggles the setting on the device.
+----------------------------------------------------------*/
+
+message SettingChangeRequest {
+    optional bool is_enabled = 1;
+}
+
+/*----------------------------------------------------------
+GCM <-> Device
+----------------------------------------------------------*/
+
+message SettingChangeResponse {
+    enum Response {
+        ERROR = 0;                      /* Catch all. Hopefully won't send */
+        SUCCESS = 1;
+        ERROR_MODE_ALREADY_SET = 2;
+    }
+    required Response response = 1;
+}
+
+/*----------------------------------------------------------
+GCM -> Device
+
+User can trigger an alarm to either test or scare away
+potential theft.
+----------------------------------------------------------*/
+
+message TriggerRequest {}
+
+/*----------------------------------------------------------
+Device -> GCM
+----------------------------------------------------------*/
+
+message TriggerResponse {
+    enum Response {
+        ERROR = 0;                      /* Catch all. Hopefully won't send */
+        SUCCESS = 1;
+        ERROR_ALREADY_IN_PROGRESS = 2;
+    }
+    required Response response = 1;
+}
+
+/*----------------------------------------------------------
+GCM -> Device
+
+User can turn off an ongoing alarm from GCM
+----------------------------------------------------------*/
+message DisableRequest {}
+
+
+/*----------------------------------------------------------
+Device -> GCM
+----------------------------------------------------------*/
+message DisableResponse {
+    enum Response {
+        ERROR = 0;                      /* Catch all. Hopefully won't send */
+        SUCCESS = 1;
+        ERROR_ALREADY_CANCELLED = 2;
+    }
+    required Response response = 1;
+}
+
+/*----------------------------------------------------------
+Device -> GCM
+
+Device will send this notification when it suspects any
+movement when it is locked and parked.
+----------------------------------------------------------*/
+message MovementAlertNotification {}
+
+
+/*----------------------------------------------------------
+GCM -> Device
+----------------------------------------------------------*/
+message ResetPINRequest {
+    optional uint32 pin = 1;    // 4 digit numeric pin
+}
+
+/*----------------------------------------------------------
+Device -> GCM
+----------------------------------------------------------*/
+message ResetPINResponse {
+    enum Response {
+        ERROR = 0;
+        SUCCESS = 1;
+    }
+    required Response response = 1;
+}
+
+
+/*----------------------------------------------------------
+GCM -> Device
+----------------------------------------------------------*/
+message SettingRequest {}
+
+
+/*----------------------------------------------------------
+Device -> GCM
+
+Will send the feature configuration on the device
+----------------------------------------------------------*/
+message SettingResponse {
+    optional uint32 pin = 1;    // 4 digit numeric pin
+    optional bool is_enabled = 2;
+    optional bool is_triggered = 3;
+}

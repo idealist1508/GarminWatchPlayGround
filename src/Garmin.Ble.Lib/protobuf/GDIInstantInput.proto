@@ -1,0 +1,67 @@
+syntax = "proto2";
+package GDI.Proto.InstantInput;
+
+// FOR JAVA (Android) COMPILATION ONLY
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIInstantInput";
+option optimize_for = LITE_RUNTIME;
+
+enum CommandResult {
+    UNKNOWN = 0;
+    SUCCESS = 1;
+    FAILURE = 2;
+}
+
+message InstantInputService {
+    optional InstantInputMessage input_content = 1;
+    optional InstantInputStartRequest start_request = 2;
+    optional InstantInputStartResponse start_response = 3;
+    optional InstantInputEndRequest end_request = 4;
+    optional InstantInputEndResponse end_response = 5;
+    optional InstantInputRestartRequest restart_request = 6;
+    optional InstantInputSyncRequest sync_request = 7;
+}
+
+message InstantInputMessage {
+    optional string content = 1;
+    optional uint32 content_size = 2;
+}
+
+message InstantInputStartRequest {
+    enum Command {
+        UNKNOWN = 0;
+        RENAME = 1;
+        POI_SEARCH = 2;
+    }
+    optional uint32 code_page = 1;
+    optional uint32 max_size = 2;
+    optional string content = 3;
+    optional uint32 content_size = 4;
+    optional Command command = 5;
+}
+
+// When GCM want to restart a new session, device has to send a new start request back.
+message InstantInputRestartRequest {
+}
+
+// When device's view is back to foreground from blocking notification,
+// it has to send a message to GCM and synchronize the data.
+message InstantInputSyncRequest {
+}
+
+message InstantInputStartResponse {
+    optional CommandResult result = 1;
+}
+
+message InstantInputEndRequest {
+    enum Command {
+        UNKNOWN = 0;
+        CANCEL = 1;
+        CONFIRM = 2;
+    }
+    optional Command command = 1;
+}
+
+message InstantInputEndResponse {
+    optional CommandResult result = 1;
+}

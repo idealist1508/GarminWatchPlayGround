@@ -1,0 +1,579 @@
+syntax = "proto2";
+package GDI.Proto.InReachMessaging;
+
+import "GDIDataTypes.proto";
+import "GDIGenericItemTransfer.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIInReachMessaging";
+option optimize_for = LITE_RUNTIME;
+
+message InReachMessagingService {
+
+    optional CapabilitiesRequest capabilities_request = 1;
+    optional CapabilitiesResponse capabilities_response = 2;
+
+    optional MessagingStatusRequest messaging_status_request = 3;
+    optional MessagingStatusResponse messaging_status_response = 4;
+
+    optional MailboxCheckRequest mailbox_check_request = 5;
+    optional MailboxCheckResponse mailbox_check_response = 6;
+
+    optional MessageSizeRequest message_size_request = 7;
+    optional MessageSizeResponse message_size_response = 8;
+
+    optional SendMessageRequest send_message_request = 9;
+    optional SendMessageResponse send_message_response = 10;
+
+    optional DeleteMessageRequest delete_message_request = 11;
+    optional DeleteMessageResponse delete_message_response = 12;
+
+    optional SendEmergencyMessageRequest send_emergency_message_request = 13;
+    optional SendEmergencyMessageResponse send_emergency_message_response = 14;
+
+    optional CancelEmergencyMessagingRequest cancel_emergency_messaging_request = 15;
+    optional CancelEmergencyMessagingResponse cancel_emergency_messaging_response = 16;
+
+    optional MessagingSubscribeRequest messaging_subscribe_request = 17;
+    optional MessagingSubscribeResponse messaging_subscribe_response = 18;
+
+    optional MailboxCheckStatusNotification mailbox_check_status_notification = 19;
+
+    optional MessageStatusNotification message_status_notification = 20;
+
+    optional MessageReceivedNotification message_received_notification = 21;
+
+    optional EmergencyMessagingStatusNotification emergency_messaging_status_notification = 22;
+
+    optional ActivationStatusNotification activation_status_notification = 23;
+
+    optional StartMessageSyncRequest start_message_sync_request = 24;
+    optional StartMessageSyncResponse start_message_sync_response = 25;
+}
+
+////////////////////////////////////////////////
+// Enumerations
+////////////////////////////////////////////////
+
+enum ActivationStatus {
+    INACTIVE         = 1; // Device is not active or activation status is unknown.
+    ACTIVE           = 2; // Device is activated.
+    ACTIVE_BYPASSED  = 3; // Device can send/receive but did not complete the full activation process.
+    SUSPENDED        = 4; // Device is suspended.
+}
+
+enum MailboxCheckStatus {
+    CHECKING     = 1;
+    NOT_CHECKING = 2;
+}
+
+enum SpecialAddress {
+    MAPSHARE = 0x01;
+    FACEBOOK = 0x02;
+    TWITTER  = 0x04;
+}
+
+enum MessageStatus {
+    UNREAD   = 0x01; // Received message hasn't been read by the user
+    NOT_SENT = 0x02; // Message composed by the user hasn't sent yet
+    CANCELED = 0x04; // The device has given up trying to send the message
+}
+
+enum TextMessageType {
+    CASUAL    = 1; // Message was sent to / received from normal address
+    EMERGENCY = 2; // Message was sent to / received from emergency services
+}
+
+////////////////////////////////////////////////
+// Setup
+////////////////////////////////////////////////
+
+message Capabilities {
+    // Indicates which inReach features are supported.
+    //
+    // There is only one GFDI configuration flag used to
+    // indicate that a device or app supports inReach
+    // features. To determine which inReach features are
+    // supported, these bitflags are used. Each bitflag
+    // refers to another protobuf interface which are
+    // implemented outside of this protobuf file.
+    enum InReachCapability {
+        TRACKING        = 0x01; // GDIInReachTracking interface is supported
+        CONTACT_SYNC    = 0x02; // GDIInReachContactSync interface is supported
+    }
+
+    // Indicates which types of messaging the device or the app support.
+    enum MessagingCapability {
+        CASUAL          = 0x01;
+        EMERGENCY       = 0x02;
+        GENERIC_BINARY  = 0x04;
+    }
+
+    // Indicates which address types are supported.
+    enum MessageAddressCapability {
+        SMS      = 0x01;
+        EMAIL    = 0x02;
+        INREACH  = 0x04;
+    }
+
+    optional uint32 inreach_capabilities         = 1; // InReachCapability flags
+    optional uint32 messaging_capabilities       = 2; // MessagingCapability flags
+    optional uint32 address_capabilities         = 3; // MessageAddressCapability flags
+    optional uint32 special_address_capabilities = 4; // SpecialAddress flags
+    optional uint32 max_casual_mesg_size         = 5; // (Device -> App) Max size in bytes for the addresses + text of a casual message (address + text encoded as UTF-8)
+    optional uint32 max_emergency_mesg_size      = 6; // (Device -> App) Max size in bytes for the text of an emergency message (text encoded as UTF-8)
+    optional uint32 max_binary_mesg_size         = 7; // (Device -> App) Max size in bytes for the binary data of a binary message
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ App optionally provides its capabilities in this request
+ and the device provides its capabilities in the response.
+ The device is meant to use this information to avoid
+ sending notifications to the app about message types that
+ the app does not support.
+----------------------------------------------------------*/
+message CapabilitiesRequest {
+    optional Capabilities capabilities = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message CapabilitiesResponse {
+    optional Capabilities capabilities = 1;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+----------------------------------------------------------*/
+message MessagingStatusRequest {
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message MessagingStatusResponse {
+    enum Status {
+        OK               = 1;
+        NOT_IMPLEMENTED  = 2; // Messaging features are not implemented.
+        // OBSOLETE: NOT_ACTIVATED = 3;
+        HARDWARE_FAILURE = 4; // Modem is non-functional, or a similar problem that requires physical repair.
+    }
+
+    required Status messaging_status                     = 1;
+    optional MailboxCheckStatus mailbox_check_status     = 2;
+    optional fixed32 last_mailbox_check                  = 3; // UNIX time of last mailbox check.
+    optional EmergencyMessagingSession emergency_session = 4; // Omitted if device doesn't support emergency messaging
+    optional string inreach_imei                         = 5; // Identifies the satellite modem
+    optional ActivationStatus activation_status          = 6;
+    optional GDI.Proto.DataTypes.UUID customer_uuid      = 7; // Garmin customer UUID received during activation.
+}
+
+////////////////////////////////////////////////
+// Messaging
+////////////////////////////////////////////////
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Sent to ask the device to check for new Messages
+----------------------------------------------------------*/
+message MailboxCheckRequest {
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message MailboxCheckResponse {
+    enum Status {
+        OK            = 1;  // No error
+        GENERIC_ERROR = 2;  // Generic error
+    }
+
+    required Status status = 1;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Request the size of a message the user is composing
+----------------------------------------------------------*/
+message MessageSizeRequest {
+    required TextMessageType type         = 1;
+    repeated string addresses             = 2; // Empty for emergency messages
+    optional uint32 special_addresses     = 3; // Casual only. SpecialAddress bitflags
+    optional string text                  = 4;
+    repeated uint32 unresolved_addresses  = 5; // Address codes where the address is unknown.
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message MessageSizeResponse {
+    enum Status {
+        OK                           = 1; // No error
+        GENERIC_ERROR                = 2; // Generic error
+        MESG_TYPE_UNAVAILABLE        = 3; // The message type used in the request is not supported by the device
+        BAD_MESG_TYPE                = 4; // Request used garbage message type or type that the device doesn't know about
+        INVALID_ADDRESS              = 5; // An address couldn't be parsed, wasn't supported or was invalid
+        INVALID_SPECIAL_ADDRESS      = 6; // A special address wasn't supported or was invalid
+        INVALID_UNRESOLVED_ADDRESS   = 7; // An unresolved address was invalid
+    }
+
+    required Status status    = 1;
+    optional uint32 max_size  = 2; // Max size (bytes) allowed for this type of Message.
+    optional uint32 size      = 3; // Size in bytes of the Message.
+}
+
+message BinaryMessageData {
+    enum BinaryMessageType {
+        GENERIC = 1; // Message consists of user defined binary data.
+    }
+
+    required BinaryMessageType type = 1;
+    optional bytes binary_data      = 2;
+}
+
+message TextMessageData {
+    optional TextMessageType type                            = 1;  // Ignored in SendMessageRequest / SendEmergencyMessageRequest
+    optional GDI.Proto.DataTypes.UUID emergency_session_uuid = 2;  // Identifies the emergency session, only applies to emergency messages. Omit for SendEmergencyMessageRequest.
+    repeated string addresses                                = 3;  // Empty for emergency messages
+    optional uint32 special_addresses                        = 4;  // Casual only. SpecialAddress bitflags.
+    optional string text                                     = 5;  // Message text
+    optional fixed32 create_time                             = 6;  // UNIX time. Device will use current time if app doesn't supply this in SendMessageRequest / SendEmergencyMessageRequest
+    optional GDI.Proto.DataTypes.GPSFixType gps_fix          = 7;  // GPS fix associated with the GPS location
+    optional GDI.Proto.DataTypes.ScPoint location            = 8;  // GPS location
+    optional float altitude                                  = 9;  // meters (above WGS84)
+    optional float course                                    = 10; // degrees (true north)
+    optional float speed                                     = 11; // meters per second
+    optional fixed32 modified_time                           = 12; // UNIX time. Time that the message status was last changed.
+    optional bool supply_location                            = 13; // The handler of the SendMessageRequest / SendEmergencyMessageRequest should use its GPS location for the message if the TextMessageData doesn't include one.
+    repeated uint32 unresolved_addresses                     = 14; // Address codes where the address is unknown.
+    optional fixed32 received_time                           = 15; // UNIX time. Time that the message was received by the device.
+}
+
+message Message {
+    required GDI.Proto.DataTypes.UUID uuid = 1; // Identifies the message
+    optional bool received                 = 2; // Ignored by SendMessageRequest
+    optional uint32 status                 = 3; // MessageStatus bitflags, ignored in SendMessageRequest
+    optional TextMessageData text_mesg     = 4; // Message contents for casual and emergency messages
+    optional BinaryMessageData binary_mesg = 5; // Message contents for binary messages
+    optional uint32 preset_mesg_id         = 6; // Preset message ID to send or ID of the preset that was sent
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Note: Emergency messages must be sent using
+ SendEmergencyMessageRequest
+----------------------------------------------------------*/
+message SendMessageRequest {
+    required Message message = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message SendMessageResponse {
+    enum Status {
+        OK                          = 1;  // No error
+        GENERIC_ERROR               = 2;  // Generic error
+        BAD_MESG_UUID               = 3;  // UUID is missing or otherwise invalid
+        DUPE_MESG_UUID              = 4;  // UUID used in send message request is already used by another message
+        MESG_TYPE_UNAVAILABLE       = 5;  // The message type used in the request is not supported by the device
+        BAD_MESG_TYPE               = 6;  // Request used garbage message type or type that the device doesn't know about
+        MULTIPLE_MESG_TYPES         = 7;  // App tried to send a Message with more than one type of message data in it
+        MESG_TOO_LARGE              = 8;  // Message contents exceeded the size limit.
+        NO_RECIPIENT                = 9;  // The message didn't include any kind of recipient.
+        NO_TEXT                     = 10; // The text field was missing or empty.
+        INVALID_ADDRESS             = 11; // An address couldn't be parsed, wasn't supported or was invalid
+        INVALID_SPECIAL_ADDRESS     = 12; // A special address wasn't supported or was invalid
+        INVALID_UNRESOLVED_ADDRESS  = 13; // An unresolved address was invalid
+        INVALID_PRESET_ID           = 14; // The preset_mesg_id was not valid.
+        NOT_ACTIVATED               = 15; // Device needs to be activated before casual messages can be sent.
+    }
+
+    required Status status                 = 1;
+    optional GDI.Proto.DataTypes.UUID uuid = 2; // Whatever was supplied as the UUID in SendMessageRequest
+}
+
+/*----------------------------------------------------------
+ App -> Device
+----------------------------------------------------------*/
+message DeleteMessageRequest {
+    required GDI.Proto.DataTypes.UUID uuid = 1; // Identifies the message
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message DeleteMessageResponse {
+    enum Status {
+        OK                     = 1; // No error
+        GENERIC_ERROR          = 2; // Generic error
+        MESG_UUID_NOT_FOUND    = 3; // Couldn't find a message with the given UUID
+    }
+
+    required Status status = 1;
+}
+
+////////////////////////////////////////////////
+// Emergency Messaging (SOS)
+////////////////////////////////////////////////
+
+message EmergencyMessagingSession {
+    enum SessionStatus {
+        NOT_AVAILABLE        = 1; // Device doesn't support emergency messaging
+        OFF                  = 2; // Not currently in emergency mode
+        DECLARED             = 3; // Emergency was declared
+        CONFIRMED            = 4; // Emergency status was confirmed by emergency services
+        ATTEMPTING_TO_CANCEL = 5; // Device is attempting to cancel the emergency
+        CANCELED             = 6; // Emergency services accepted the cancelation of the emergency
+    }
+
+    required SessionStatus status                  = 1;
+    optional GDI.Proto.DataTypes.UUID session_uuid = 2; // Identifies the emergency messaging session, for use with CancelEmergencyMessagingRequest
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ This request is used in two different ways:
+   1. Send an empty request, or a request that only contains
+      the app_info field, to start an emergency session.
+
+   2. After an emergency session has been started, send with
+      uuid and text_mesg fields populated to send a message
+      to emergency services.
+
+ When an emergency session is started, this notifies
+ emergency services that you have an emergency and opens a
+ line of communication with them.
+----------------------------------------------------------*/
+message SendEmergencyMessageRequest {
+    optional GDI.Proto.DataTypes.UUID uuid = 1; // Identifies the Message
+    optional TextMessageData text_mesg     = 2; // Message text, create time and location info
+    optional string app_info               = 3; // Version and name of the app which is sending this request, only used for declare.
+    optional bool declare                  = 4; // Set to true to declare an emergency, false if only sending an emergency text message.
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message SendEmergencyMessageResponse {
+    enum Status {
+        OK                     = 1; // No error
+        GENERIC_ERROR          = 2; // Generic error
+        NOT_AVAILABLE          = 3; // Device doesn't support emergency messaging
+        ALREADY_IN_EMERGENCY   = 4; // Could not start emergency session because an emergency session is already in progress.
+        BAD_MESG_UUID          = 5; // UUID is missing or otherwise invalid
+        DUPE_MESG_UUID         = 6; // UUID used in send message request is already used by another message
+        MESG_TOO_LARGE         = 7; // Message contents exceeded the size limit.
+        EMERGENCY_NOT_STARTED  = 8; // An emergency session must be started before sending an emergency text message.
+        NO_TEXT                = 9; // When sending an emergency text message, the text cannot be missing or empty.
+        AMBIGUOUS_REQUEST      = 10; // The declare field needs to be set.
+    }
+
+    required Status status                 = 1;
+    optional GDI.Proto.DataTypes.UUID uuid = 2; // UUID value from SendEmergencyMessageRequest
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ This request is sent to cancel the emergency session,
+ meaning that the user no longer needs help from emergency
+ services.
+----------------------------------------------------------*/
+message CancelEmergencyMessagingRequest {
+    required GDI.Proto.DataTypes.UUID session_uuid = 1; // UUID identifying the session to cancel (received from EmergencyMessagingStatusNotification)
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message CancelEmergencyMessagingResponse {
+    enum Status {
+        OK                   = 1; // No error.
+        GENERIC_ERROR        = 2; // Generic error.
+        SESSION_MISMATCH     = 3; // Could not cancel because current emergency session doesn't match the given session UUID
+    }
+
+    required Status status = 1;
+}
+
+////////////////////////////////////////////////
+// Notifications
+////////////////////////////////////////////////
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Sent to start or stop receiving messaging notifications.
+----------------------------------------------------------*/
+message MessagingSubscribeRequest {
+    optional bool want_mailbox_check_status     = 1 [default = false];
+    optional bool want_message_status           = 2 [default = false];
+    optional bool want_message_received         = 3 [default = false];
+    optional bool want_emergency_message_status = 4 [default = false];
+    optional bool want_activation_status        = 5 [default = false];
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message MessagingSubscribeResponse {
+    enum Status {
+        OK               = 1; // No error
+        GENERIC_ERROR    = 2; // Generic error
+    }
+
+    required Status status = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+
+ Received when the device's mailbox check status changes
+----------------------------------------------------------*/
+message MailboxCheckStatusNotification {
+    optional MailboxCheckStatus status = 1;
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+
+ Sent when a message is read, sent, canceled or had its
+ location information updated.
+----------------------------------------------------------*/
+message MessageStatusNotification {
+    required GDI.Proto.DataTypes.UUID uuid           = 1;
+    required uint32 status                           = 2; // MessageStatus bitflags
+    optional GDI.Proto.DataTypes.GPSFixType gps_fix  = 3; // GPS fix associated with the GPS location
+    optional GDI.Proto.DataTypes.ScPoint location    = 4; // GPS location
+    optional float altitude                          = 5; // meters (above WGS84)
+    optional float course                            = 6; // degrees (true north)
+    optional float speed                             = 7; // meters per second
+}
+
+/*----------------------------------------------------------
+ Device -> App
+
+ Sent when a new Message arrives or when a message is
+ composed on the device.
+----------------------------------------------------------*/
+message MessageReceivedNotification {
+    required Message mesg = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message EmergencyMessagingStatusNotification {
+    required EmergencyMessagingSession session = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+
+ Received when the device's activation status changes
+----------------------------------------------------------*/
+message ActivationStatusNotification {
+    optional ActivationStatus          activation_status = 1;
+    optional GDI.Proto.DataTypes.UUID  customer_uuid     = 2; // Garmin customer UUID received during activation.
+}
+
+////////////////////////////////////////////////
+// Sync
+////////////////////////////////////////////////
+
+/*----------------------------------------------------------
+ App -> Device
+
+ Sent to ask the device to start syncing messages
+----------------------------------------------------------*/
+message StartMessageSyncRequest {
+    optional GDI.Proto.DataTypes.UUID app_uuid = 1;
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message StartMessageSyncResponse {
+    enum Status {
+        OK             = 1; // A Generic Item Transfer request will be sent.
+        UP_TO_DATE     = 2; // The device doesn't have any unread messages and will not make a Generic Item Transfer request.
+        GENERIC_ERROR  = 3; // Something went wrong
+        UNAVAILABLE    = 4; // This request is not supported by this device.
+        BUSY           = 5; // Unable to sync right now.
+    }
+    required Status status = 1;
+}
+
+////////////////////////////////////////////////
+// Generic Item Transfer support
+////////////////////////////////////////////////
+
+extend GDI.Proto.GenericItemTransfer.DataTypeConfig {
+    optional DataTypeConfigExt config_ext = 100;
+}
+
+extend GDI.Proto.GenericItemTransfer.DataTypeStatus {
+    optional DataTypeStatusExt status_ext = 100;
+}
+
+extend GDI.Proto.GenericItemTransfer.GenericItemReference {
+    optional GenericItemReferenceExt reference_ext = 100;
+}
+
+extend GDI.Proto.GenericItemTransfer.GenericItem {
+    optional GenericItemExt item_ext = 100;
+}
+
+message MessageRequestDetail {
+    optional GDI.Proto.DataTypes.UUID uuid = 1;                   // Identifies the message
+    optional bool metadata_only            = 2 [default = false]; // Set to true to request MessageMetadata instead of whole Message
+}
+
+message MessageMetadata {
+    optional GDI.Proto.DataTypes.UUID uuid                    = 1; // Identifies the message
+    optional bool received                                    = 2; // True for received messages (aka MT), false for composed messages (aka MO)
+    optional uint32 status                                    = 3; // MessageStatus bitflags
+    optional bool has_location                                = 4; // For text messages, indicates if Message has location data.
+    optional fixed32 modified_time                            = 5; // UNIX time. Time the message status was last modified.
+    optional TextMessageType text_type                        = 6; // Supplied if the Message has TextMessageData.
+    optional BinaryMessageData.BinaryMessageType binary_type  = 7; // Supplied if the Message has BinaryMessageData.
+}
+
+message MessageDateRangeQuery {
+    enum QueryType {
+        ALL_MESSAGES         = 1; // Messages with create times or modified times within the date range.
+        READ_STATUS_UPDATED  = 2; // MT messages marked as read (within the date range) by the receiver of this query.
+    }
+    optional uint32 messaging_capabilities  = 1; // MessagingCapability flags, indicates which types of Messages to return.
+    optional fixed32 date_begin             = 2; // UNIX time, start of inclusive date range. If omitted, the "beginning of time" is used.
+    optional fixed32 date_end               = 3; // UNIX time, end of inclusive date range. If omitted, the current time is used.
+    optional uint32 mesg_limit              = 4; // Limit the total number of Messages returned.
+    optional QueryType query_type           = 5 [default = ALL_MESSAGES];
+}
+
+message DataTypeConfigExt {
+    optional MessageDateRangeQuery mesg_date_range = 1; // Used in ItemListRequest
+}
+
+message DataTypeStatusExt {
+    optional uint32 mesg_max_request_count          = 1; // Max number of whole Messages that can be requested in a single ItemRequest
+    optional uint32 mesg_metadata_max_request_count = 2; // Max number of MessageMetadatas that can be requested in a single ItemRequest
+}
+
+message GenericItemReferenceExt {
+    optional MessageRequestDetail request_detail = 1; // Used in ItemRequests
+    optional MessageMetadata mesg_metadata       = 2; // Used in ItemListResponses
+}
+
+message GenericItemExt {
+    optional Message mesg                   = 1; // Whole Message
+    optional MessageMetadata mesg_metadata  = 2; // Used if metadata_only was set to true.
+}

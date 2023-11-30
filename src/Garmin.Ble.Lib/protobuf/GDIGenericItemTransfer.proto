@@ -1,0 +1,259 @@
+syntax = "proto2";
+package GDI.Proto.GenericItemTransfer;
+
+import "GDIDataTypes.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIGenericItemTransferProto";
+option optimize_for = LITE_RUNTIME;
+
+/*----------------------------------------------------------
+ Notice:
+
+ A Generic Item Transfer session can be initiated by either the
+ device or the app. However, with each Generic Item Transfer
+ session, the side which made the first request must only send
+ certain protobuf message types and the responder is only
+ allowed to send the remaining protobuf message types.
+
+ The side which sends the initial ArbitraryItemRequest or
+ ItemListRequest is called the "requester" and the side which
+ responds to that request is called the "responder". The
+ responder is responsible for providing the session_id to the
+ requester.
+
+ The requester is only allowed to send: ArbitraryItemRequest,
+ ItemListRequest, ItemRequest, CancelSessionResponse and
+ SessionCompletedNotification.
+
+ The responder is only allowed to send: ArbitraryItemResponse,
+ ItemListResponse, ItemResponse and CancelSessionRequest.
+----------------------------------------------------------*/
+
+message GenericItemTransferService {
+    optional ArbitraryItemRequest arbitrary_item_request = 1;
+    optional ArbitraryItemResponse arbitrary_item_response = 2;
+
+    optional ItemListRequest item_list_request = 3;
+    optional ItemListResponse item_list_response = 4;
+
+    optional ItemRequest item_data_request = 5;
+    optional ItemResponse item_data_response = 6;
+
+    /* IDs 7 and 8 reserved for SetItemAttributeRequest / SetItemAttributeResponse */
+
+    optional CancelSessionRequest cancel_session_request = 9;
+    optional CancelSessionResponse cancel_session_response = 10;
+
+    optional SessionCompletedNotification session_completed_notification = 11;
+}
+
+enum SessionEndReason {
+    COMPLETE          = 1; // The requester successfully received everything it wanted.
+    ERROR             = 2; // An error prevented the session from being able to continue.
+    TIMEOUT           = 3; // An expected request, response or notification did not arrive after an extended period of time.
+    USER_CANCEL       = 4; // The user chose to cancel this data transfer or canceled the larger operation which owns this data transfer.
+    SHUTDOWN          = 5; // The device or phone is shutting down.
+    RESTART           = 6; // The device or phone is restarting.
+    APP_RESTRICTION   = 7; // The phone's OS is preventing the app from continuing the session.
+    APP_CLOSE         = 8; // The app is closing.
+}
+
+/*----------------------------------------------------------
+ Reserved protobuf extension numbers
+
+ Each type of data used with the Generic Item Transfer system
+ must reserve its own protobuf extension number. The number
+ which each type of data uses must be documented below so
+ that two different types of data don't end up using the
+ same extension number.
+
+ 100 - inReach Messaging (GDIInReachMessaging.proto)
+ 101 - inReach Tracking (GDIInReachTracking.proto)
+ 102 - inReach Contact Sync (GDIInReachContactSync.proto)
+----------------------------------------------------------*/
+
+/*----------------------------------------------------------
+ Use protobuf extension to add type-specific config info to this.
+----------------------------------------------------------*/
+message DataTypeConfig {
+    extensions 100 to max;
+}
+
+/*----------------------------------------------------------
+ Use protobuf extension to add type-specific error/status info to this (if necessary).
+----------------------------------------------------------*/
+message DataTypeStatus {
+    extensions 100 to max;
+}
+
+/*----------------------------------------------------------
+ Used to deliver a single item of data to the requester
+----------------------------------------------------------*/
+message GenericItem {
+    // The data_transfer fields are only provided if the
+    // item must be transfered using the GDIDataTransfer mechanism.
+    optional uint32 data_transfer_id    = 1;
+    optional uint32 data_transfer_size  = 2;
+
+    // If the data_transfer fields are not provided, the
+    // data should be included in the protobuf extension
+    // associated with the data type.
+    extensions 100 to max;
+}
+
+/*----------------------------------------------------------
+ Identifies and may contain metadata for a GenericItem
+----------------------------------------------------------*/
+message GenericItemReference {
+    optional GDI.Proto.DataTypes.UUID uuid = 1;
+
+    extensions 100 to max;
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+
+ This request is used to start a Generic Item Transfer for
+ the case when the requester already has the IDs of all of
+ the items that it wants. The actual items still must be
+ requested through one or more ItemRequest messages.
+----------------------------------------------------------*/
+message ArbitraryItemRequest {
+    optional DataTypeConfig config     = 1;  // Contains an extension which indicates which data type to transfer.
+    optional uint32 item_request_count = 2;  // Total number of items the requester intends to request.
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+----------------------------------------------------------*/
+message ArbitraryItemResponse {
+    enum Status {
+        SUCCESS                   = 1; // Session was created. Requester must send a SessionCompletedNotification when it is finished.
+        ABORT                     = 2; // The request was rejected.
+        ERROR                     = 3; // Generic error
+        UNSUPPORTED_DATA_TYPE     = 4; // The responder doesn't support the data type included in the DataTypeConfig.
+        UNSUPPORTED_REQUEST_TYPE  = 5; // The data type doesn't support ArbitraryItemRequests.
+        DATA_TYPE_IS_BUSY         = 6; // The requested type can't currently be transfered because it is in use.
+        SYSTEM_IS_BUSY            = 7; // No type of data can be transfered because the system is busy doing something that prevents it from transferring data.
+        TRANSFER_LIMIT            = 8; // The responder is already processing the max number of transfers that it can handle.
+    }
+    required Status status                   = 1;
+    optional DataTypeStatus data_type_status = 2; // For type-specific error/status information (if necessary).
+    optional uint32 session_id               = 3; // The session_id to use with ItemRequest, and SessionCompletedNotification for this same Generic Item Transfer session.
+    optional uint32 max_request_count        = 4 [default = 1]; // Max number of GenericItemReferences allowed in a single ItemRequest.
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+
+ Start or continue a Generic Item Transfer session where
+ a list of items is to be transferred.
+----------------------------------------------------------*/
+message ItemListRequest {
+    optional uint32 session_id          = 1; // Omit from the first request then use the session_id from ItemListResponse.
+    optional DataTypeConfig config      = 2; // Contains an extension which indicates which data type to transfer.
+
+    optional uint32 list_offset         = 3; // Opaque value which indicates where in the list to start returning items.
+                                             // This should be omitted from the first ItemListRequest and should
+                                             // only ever be set from the next_list_offset value from ItemListResponse.
+
+    optional uint32 max_item_ref_count  = 4; // Max number of GenericItemReferences that the requester can handle at a time.
+                                             // The response may contain fewer GenericItemReferences than this.
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+----------------------------------------------------------*/
+message ItemListResponse {
+    enum Status {
+        SUCCESS                   = 1;  // There are items available to transfer. Requester must send a SessionCompletedNotification when it is finished.
+        NO_ITEMS                  = 2;  // There are no items that need to be transfered.
+        ABORT                     = 3;  // The request was rejected.
+        ERROR                     = 4;  // Generic error
+        INVALID_SESSION_ID        = 5;  // session_id was invalid.
+        INVALID_LIST_OFFSET       = 6;  // The list_offset field in the request was invalid.
+        WRONG_SESSION_TYPE        = 7;  // A session that was started with an ArbitraryItemRequest can't also use ItemListRequest.
+        UNSUPPORTED_DATA_TYPE     = 8;  // The responder doesn't support the data type included in the DataTypeConfig.
+        UNSUPPORTED_REQUEST_TYPE  = 9;  // The data type doesn't support ItemListRequests.
+        DATA_TYPE_IS_BUSY         = 10; // The requested type can't currently be transfered because it is in use.
+        SYSTEM_IS_BUSY            = 11; // No type of data can be transfered because the system is busy doing something that prevents it from transferring data.
+        TRANSFER_LIMIT            = 12; // The responder is already processing the max number of transfers that it can handle.
+    }
+    required Status status                   = 1;
+    optional DataTypeStatus data_type_status = 2; // For type-specific error/status information (if necessary).
+    optional uint32 session_id               = 3; // The session_id to use with ItemListRequest, ItemRequest, and SessionCompletedNotification for this same Generic Item Transfer session.
+    repeated GenericItemReference items      = 4;
+    optional uint32 max_request_count        = 5 [default = 1]; // Max number of GenericItemReferences allowed in a single ItemRequest.
+
+    optional uint32 next_list_offset         = 6; // If provided, the value to use for list_offset in the next ItemListRequest.
+                                                  // If omitted, then there are no more GenericItemReferences to return.
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+----------------------------------------------------------*/
+message ItemRequest {
+    optional uint32 session_id             = 1;  // The session_id from ArbitraryItemResponse or ItemListResponse.
+    // Field IDs 2 through 5 are reserved for future use
+
+    repeated GenericItemReference items    = 6;
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+----------------------------------------------------------*/
+message ItemResponse {
+    enum Status {
+        SUCCESS                   = 1;
+        INVALID_ITEM              = 2; // One or more requested items had an invalid ID or could not be found.
+        ABORT                     = 3; // The request was rejected because the session was canceled.
+        ERROR                     = 4; // Generic error
+        INVALID_SESSION_ID        = 5; // session_id was missing or invalid.
+        UNSUPPORTED_REQUEST_TYPE  = 6; // The data type doesn't support ItemRequests.
+        REQUEST_TOO_LARGE         = 7; // The ItemRequest included too many GenericItemReferences
+    }
+    required Status status                       = 1;
+    optional DataTypeStatus data_type_status     = 2; // For type-specific error/status information (if necessary).
+    optional uint32 session_id                   = 3;
+    repeated GenericItem items                   = 4; // Returned in the order they were requested (with any invalid_items removed)
+    repeated GenericItemReference invalid_items  = 5; // Requested items that had invalid IDs or could not be found (in request order).
+    optional uint32 max_request_count            = 6; // Max number of GenericItemReferences allowed in a single ItemRequest, included only if status is REQUEST_TOO_LARGE.
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+
+ This is only sent by the side that sent the original Generic
+ Item Transfer request. It can be used to mark the session as
+ completed or to cancel a Generic Item Transfer session.
+----------------------------------------------------------*/
+message SessionCompletedNotification {
+    required uint32 session_id               = 1;
+    required SessionEndReason reason         = 2;
+    optional DataTypeStatus data_type_status = 3; // For type-specific error/status information (if necessary).
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+
+ This is only sent by the side that responded to the original
+ Generic Item Transfer request.
+----------------------------------------------------------*/
+message CancelSessionRequest {
+    required uint32 session_id               = 1;
+    optional SessionEndReason reason         = 2;
+    optional DataTypeStatus data_type_status = 3; // For type-specific error/status information (if necessary).
+}
+
+/*----------------------------------------------------------
+ App <-> Device
+----------------------------------------------------------*/
+message CancelSessionResponse {
+    enum Status {
+        SUCCESS             = 1;
+        ERROR               = 2;
+        INVALID_SESSION_ID  = 3;
+    }
+    required Status status  = 1;
+}

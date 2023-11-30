@@ -1,0 +1,94 @@
+syntax = "proto2";
+package GDI.Proto.EventSharing;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIEventSharingProto";
+option optimize_for = LITE_RUNTIME;
+
+message EventSharingService {
+    optional SubscribeRequest      subscribe_request     = 1;
+    optional SubscribeResponse     subscribe_response    = 2;
+
+    optional AlertNotification     alert_notification    = 3;
+
+    optional AlertSupportRequest   support_request       = 4;
+    optional AlertSupportResponse  support_response      = 5;
+    }
+
+/*----------------------------------------------------------
+                        ENUMERATIONS
+----------------------------------------------------------*/
+enum AlertType {
+    ACTIVITY_START        = 0;
+    ACTIVITY_STOP         = 1;
+    ACTIVITY_DISTANCE     = 2; //requires AlertMessage.interval to be set
+    ACTIVITY_TIME         = 3; //requires AlertMessage.interval to be set
+    ACTIVITY_AUTO_LAP     = 4;
+    ACTIVITY_MANUAL_LAP   = 5;
+    ACTIVITY_TRANSITION   = 6;
+}
+
+/*----------------------------------------------------------
+                          MESSAGES
+----------------------------------------------------------*/
+message AlertMessage {
+    optional AlertType  type            = 1;    //type of alert
+    optional uint32     interval        = 2;    //interval the alert should trigger at, distance in meters, time in seconds
+}
+
+message Sport {
+    required uint32 sport_fit_type      = 1;
+    required uint32 sport_fit_sub_type  = 2;
+}
+
+message ActivityAlertDetails{
+    optional uint32     total_distance  = 1;    //total distance in the activity ( * 100 meters)
+    optional uint32     total_time      = 2;    //total time in the activity (seconds)
+    optional uint32     lap_time        = 3;    //time of the last lap (seconds)
+    optional uint32     average_pace    = 4;    //average pace of the activity (* 1000 mph)
+    optional Sport      sport_type      = 5;    //sport of activity
+    optional uint32     est_finish_time = 6;    //est. finish time of the activity (seconds, estimated remaining time)
+    optional uint32     lap_number      = 7;    //current lap number
+}
+
+/*----------------------------------------------------------
+App -> device
+Subscription requests will overwrite any previous subscription
+requests. This allows the app to make any modifications to the
+list of alerts it is listening for at any time. To
+unsubscribe, send this request with no alerts.
+---------------------------------------------------------- */
+message SubscribeRequest {
+    repeated AlertMessage alerts          = 1;    //list of alerts to set
+    optional uint32       target_distance = 2;    //target distance the user is going to run, used to calulate est_finish_time in the case with no course
+}
+
+//Alert Support request is sent from app to device when it wants
+//to know what alert types are supported
+message AlertSupportRequest {
+}
+
+/*----------------------------------------------------------
+App <- device
+----------------------------------------------------------*/
+message SubscribeResponse {
+    message AlertStatusMessage {
+        enum Status {
+            SUCCESS = 0;
+            FAIL    = 1; //indicates that data was incomplete in request (e.g. AlertMessage.interval was not set)
+        }
+        required Status        subscribe_status = 1;
+        optional AlertMessage  type             = 2;
+    }
+    repeated AlertStatusMessage alert_status = 1; //list of alerts and associated statuses
+}
+
+message AlertSupportResponse {
+    repeated AlertType supported_alerts = 1; //list of supported alerts
+}
+
+message AlertNotification {
+    repeated AlertType            alert_type       = 1; //type of alert
+
+    optional ActivityAlertDetails activity_details = 2; //activity details
+}

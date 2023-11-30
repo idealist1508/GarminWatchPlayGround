@@ -1,0 +1,167 @@
+syntax = "proto2";
+package GDI.Proto.InReachContactSync;
+
+import "GDIDataTypes.proto";
+import "GDIGenericItemTransfer.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIInReachContactSync";
+option optimize_for = LITE_RUNTIME;
+
+
+message InReachContactSyncService {
+    optional SyncRequest sync_request = 1;
+    optional SyncResponse sync_response = 2;
+}
+
+////////////////////////////////////////////////
+// Data
+////////////////////////////////////////////////
+
+message Contact {
+    required GDI.Proto.DataTypes.UUID uuid = 1;
+    optional bool read_only                = 2 [default = false];
+    optional fixed32 name_edit_time        = 3;  // UNIX time
+    optional string first_name             = 4;
+    optional string last_name              = 5;
+    optional string organization           = 6;
+    optional fixed32 email_edit_time       = 7;  // UNIX time
+    optional string email                  = 8;
+    optional fixed32 mobile_edit_time      = 9;  // UNIX time
+    optional string mobile                 = 10;
+    optional fixed32 inreach_edit_time     = 11; // UNIX time
+    optional string inreach                = 12;
+}
+
+message PresetMessage {
+    enum SpecialAddress {
+        MAPSHARE = 1;
+        FACEBOOK = 2;
+        TWITTER  = 3;
+    }
+
+    optional uint32 code                       = 1;
+    repeated string addresses                  = 2;
+    repeated SpecialAddress special_addresses  = 3;
+    optional string text                       = 4;
+}
+
+message QuickText {
+    optional string text = 1;
+}
+
+////////////////////////////////////////////////
+// Sync
+////////////////////////////////////////////////
+
+message SyncRequestInfo {
+
+    enum SyncType {
+        FULL        = 1; // Sync all data
+        INCREMENTAL = 2; // Only sync data that was created or modified since the last sync.
+    }
+
+    enum SyncDataType {
+        CONTACT        = 1;
+        PRESET_MESSAGE = 2;
+        QUICK_TEXT     = 3;
+    }
+
+    optional uint32 protocol_version            = 1 [default = 1];
+    optional GDI.Proto.DataTypes.UUID app_uuid  = 2; // Only included when sent by the app.
+    optional SyncType sync_type                 = 3 [default = INCREMENTAL];
+    optional SyncDataType data_type             = 4;
+}
+
+/*----------------------------------------------------------
+ App -> Device
+
+ App sends this request to tell the device to request a
+ specific type of data via Generic Item Transfer.
+----------------------------------------------------------*/
+message SyncRequest {
+    optional SyncRequestInfo request_info   = 1;
+    optional uint32 ending_transaction_id   = 2; // Value to use as the Contacts max_transaction_id.
+    optional fixed32 timestamp              = 3; // UNIX time, current Presets or QuickTexts timestamp
+}
+
+/*----------------------------------------------------------
+ Device -> App
+----------------------------------------------------------*/
+message SyncResponse {
+    enum Status {
+        OK                             = 1; // Device will make a Generic Item Transfer request
+        UP_TO_DATE                     = 2; // Device has the same data as the app or the app's data is stale.
+        GENERIC_ERROR                  = 3;
+        BUSY                           = 4; // Can't sync right now
+        UNSUPPORTED_PROTOCOL_VERSION   = 5;
+        UNSUPPORTED_DATA_TYPE          = 6;
+        MISSING_INFO                   = 7; // Information was missing from the SyncRequest
+    }
+    required Status status = 1;
+}
+
+////////////////////////////////////////////////
+// Generic Item Transfer support
+////////////////////////////////////////////////
+
+extend GDI.Proto.GenericItemTransfer.DataTypeConfig {
+    optional DataTypeConfigExt config_ext = 102;
+}
+
+extend GDI.Proto.GenericItemTransfer.DataTypeStatus {
+    optional DataTypeStatusExt status_ext = 102;
+}
+
+extend GDI.Proto.GenericItemTransfer.GenericItemReference {
+    optional GenericItemReferenceExt item_ref_ext = 102;
+}
+
+extend GDI.Proto.GenericItemTransfer.GenericItem {
+    optional GenericItemExt item_ext = 102;
+}
+
+message DataTypeConfigExt {
+    optional SyncRequestInfo request_info   = 1;
+
+    // When sent by the device, this is the app's transaction ID from the last sync,
+    // or omitted if there was no last sync or if this is a full sync rather than an incremental sync.
+    // When sent by the app, this should be omitted.
+    optional uint32 min_transaction_id      = 2;
+
+    // When sent by the device, use the ending_transaction_id received in the SyncRequest.
+    // When sent by the app, this should be omitted.
+    optional uint32 max_transaction_id      = 3;
+}
+
+message DataTypeStatusExt {
+    enum Status {
+        UNSUPPORTED_PROTOCOL_VERSION   = 1;
+        UNSUPPORTED_DATA_TYPE          = 2;
+        MISSING_INFO                   = 3;
+    }
+    optional Status status      = 1; // Included only if one of these errors applies.
+    optional fixed32 timestamp  = 2; // UNIX time, used to deliver the PresetMessages or QuickText timestamp in an ItemListResponse
+}
+
+message GenericItemReferenceExt {
+
+    message ContactReference {
+        required GDI.Proto.DataTypes.UUID uuid   = 1;
+        optional bool deleted                    = 2 [default = false];
+        optional bool read_only                  = 3 [default = false];
+        optional fixed32 name_edit_time          = 4; // UNIX time, first / last name edit time
+        optional fixed32 email_edit_time         = 5; // UNIX time, email address edit time
+        optional fixed32 mobile_edit_time        = 6; // UNIX time, mobile phone number edit time
+        optional fixed32 inreach_edit_time       = 7; // UNIX time, inreach address edit time
+    }
+
+    optional ContactReference contact_ref  = 1; // Contact metadata
+    optional uint32 preset_code            = 2; // Identifies a PresetMessage
+    optional QuickText quick_text          = 3; // QuickTexts have no ID and are delivered in ItemListResponses
+}
+
+message GenericItemExt {
+    optional Contact contact               = 1;
+    optional PresetMessage preset_message  = 2;
+}

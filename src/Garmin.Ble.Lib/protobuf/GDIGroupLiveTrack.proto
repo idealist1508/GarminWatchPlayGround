@@ -1,0 +1,135 @@
+syntax = "proto2";
+package GDI.Proto.GroupLiveTrack;
+
+import "GDIDataTypes.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIGroupLiveTrack";
+option optimize_for = LITE_RUNTIME;
+
+message GroupLiveTrackService {
+  optional GetLiveTrackConnectionsRequest get_live_track_connections_request = 1;
+  optional GetLiveTrackConnectionsResponse get_live_track_connections_response = 2;
+  optional GetLastKnownLocationRequest get_last_known_location_request = 3;
+  optional GetLastKnownLocationResponse get_last_known_location_response = 4;
+}
+
+// See fitnesstracking.proto GetLiveTrackConnectionsRequest
+// Message Direction: Garmin Device to GCM
+message GetLiveTrackConnectionsRequest {
+
+  // Semi-circle coordinates wrapper.  Only used if radius is also defined to
+  // filter users by distance from this position.
+  optional GDI.Proto.DataTypes.ScPoint position = 1;
+
+  // The distance in meters from "position" in which LiveTrack connections are
+  // of interest to the publisher
+  optional uint32 radius = 2;
+
+  // Activity types of interest to the publisher.  These types are directly
+  // mapped from the CSM fitnesstracking.proto enum of the same name.
+  repeated FitnessPointData.ActivityType activity_type = 3;
+}
+
+// See fitnesstracking.proto GetLiveTrackConnectionsResponse
+// Message Direction: GCM to Garmin Device
+message GetLiveTrackConnectionsResponse {
+  required GroupTrackResponse group_track_response = 1;
+  repeated LiveConnectionUserTrackPoint track_points = 2;
+  // interval in seconds between calls of what returned this
+  optional uint32 call_interval = 3;
+}
+
+message GroupTrackResponse {
+  required bool success = 1;
+
+  // present when success is false
+  optional ResponseFailureStatus failureStatus = 2;
+}
+
+enum ResponseFailureStatus {
+  UNDEFINED = 0;
+  NO_NETWORK_CONN = 1;
+  TIMEOUT = 2;
+  SERVER_ERROR = 3;
+  EMPTY_SESSION_IDS_LIST = 4;
+}
+
+// See fitnesstracking.proto GetLastKnownLocationRequest
+// Message Direction: Garmin Device to GCM
+message GetLastKnownLocationRequest {
+  repeated string session_id = 1;
+  optional uint64 user_profile_pk = 2 [default=0];
+}
+
+// See fitnesstracking.proto GetLastKnownLocationResponse
+// Message Direction: GCM to Garmin Device
+message GetLastKnownLocationResponse {
+  required GroupTrackResponse group_track_response = 1;
+  repeated LiveConnectionTrackPoint track_points = 2;
+
+  // interval in seconds between calls of what returned this
+  optional uint32 call_interval = 3;
+
+  // true if the calling user has been added to 1 or more LiveTrack sessions indicating that a call to GetLiveTrackConnections should be made
+  optional bool dirty = 4;
+}
+
+// Fitness Live Tracking Point Data.  This message is directly copied from the CSM fitnesstracking.proto file.
+message FitnessPointData {
+
+  // Represents fitness tracking activity types mapped from CSM
+  enum ActivityType {
+    CYCLING = 0;
+    RUNNING = 1;
+    WALKING = 2;
+    OTHER   = 3;
+
+    //Add for Garmin Connect Mobile
+    TRANSITION = 4;
+
+    FITNESS_EQUIPMENT = 5;
+    SWIMMING = 6;
+    HIKING = 7;
+    UNCATEGORIZED = 8;
+
+    //Add for Zumo
+    MOTOR_CYCLING = 9;
+  }
+}
+
+// Represents a LiveTrack connections current position and activity. This message
+// is directly copied from the CSM fitnesstracking.proto message of the same name.
+message LiveConnectionTrackPoint {
+  // the live track session_id
+  required string session_id = 1;
+
+  // the most recent reported time
+  optional uint64 reported_timestamp = 2;
+
+  // the position at the most recent reported time
+  optional GDI.Proto.DataTypes.ScPoint position = 3;
+
+  // speed in meters per second if in motion
+  optional double speed_mps = 4;
+
+  // heading if in motion and available, in semicircles.
+  optional sint32 heading_sc = 5;
+
+  // the activity if available
+  optional FitnessPointData.ActivityType activity_type = 6;
+}
+
+// This user_display_name is from a call to GC to get the users profile for full name/display name.
+// This message is directly copied from the CSM fitnesstracking.proto file.
+message LiveConnectionUserTrackPoint {
+  // the user display name in a trackerSession
+  required string user_display_name = 1;
+
+  // the most recent track point
+  optional LiveConnectionTrackPoint track_point = 2;
+
+  // indicate if the session allows for livetrack messaging
+  optional bool is_livetrack_messaging_available = 3;
+
+}

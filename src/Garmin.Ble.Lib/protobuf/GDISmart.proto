@@ -1,0 +1,77 @@
+syntax = "proto2";
+package GDI.Proto.Smart;
+
+import "GDICalendar.proto";
+import "GDIInternationalGolf.proto";
+import "GDIConnectIQHTTP.proto";
+import "GDIConnectIQInstalledApps.proto";
+import "GDIConnectIQAppSettings.proto";
+import "GDISwingSensor.proto";
+import "GDIDataTransfer.proto";
+import "GDIDeviceStatus.proto";
+import "GDIIncidentDetection.proto";
+import "GDIAudioPrompts.proto";
+import "GDIWifiSetup.proto";
+import "GDIFindMyWatch.proto";
+import "GDICore.proto";
+import "GDIGroupLiveTrack.proto";
+import "GDIExpresspayCommand.proto";
+import "GDISmsNotification.proto";
+import "GDILiveTrack.proto";
+import "GDILiveTrackMessaging.proto";
+import "GDIInstantInput.proto";
+import "GDISportProfileSetup.proto";
+import "GDIHSAData.proto";
+import "GDIExploreSync.proto";
+import "GDIDeviceMessages.proto";
+import "GDIWaypointTransfer.proto";
+import "GDIAntiTheftAlarm.proto";
+import "GDILTE.proto";
+import "GDICredentials.proto";
+import "GDIInReachTracking.proto";
+import "GDIInReachMessaging.proto";
+import "GDIEventSharing.proto";
+import "GDIGenericItemTransfer.proto";
+import "GDIInReachContactSync.proto";
+import "GDIHandCalibration.proto";
+
+option optimize_for = LITE_RUNTIME;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDISmartProto";
+
+message Smart {
+    optional GDI.Proto.Calendar.CalendarService calendar_events_service = 1;
+    optional GDI.Proto.ConnectIQHTTP.ConnectIQHTTPService connect_iq_http_service = 2;
+    optional GDI.Proto.ConnectIQInstalledApps.ConnectIQInstalledAppsService connect_iq_installed_apps_service = 3;
+    optional GDI.Proto.ConnectIQAppSettings.ConnectIQAppSettingsService connect_iq_app_settings_service = 4;
+    optional GDI.Proto.InternationalGolf.InternationalGolfService international_golf_service = 5;
+    optional GDI.Proto.SwingSensor.SwingSensorService swing_sensor_service = 6;
+    optional GDI.Proto.DataTransfer.DataTransferService data_transfer_service = 7;
+    optional GDI.Proto.DeviceStatus.DeviceStatusService device_status_service = 8;
+    optional GDI.Proto.IncidentDetection.IncidentDetectionService incident_detection_service = 9;
+    optional GDI.Proto.AudioPrompts.AudioPromptsService audio_prompts_service = 10;
+    optional GDI.Proto.WifiSetup.WifiSetupService wifi_setup_service = 11;
+    optional GDI.Proto.FindMyWatch.FindMyWatchService find_my_watch_service = 12;
+    optional GDI.Proto.Core.CoreService core_service = 13;
+    optional GDI.Proto.GroupLiveTrack.GroupLiveTrackService group_live_track_service = 14;
+    optional GDI.Proto.ExpresspayCommand.ExpresspayCommandService expresspay_command_service = 15;
+    optional GDI.Proto.SmsNotification.SmsNotificationService sms_notification_service = 16;
+    optional GDI.Proto.LiveTrackMessaging.LiveTrackMessagingService live_track_messaging_service = 17;
+    optional GDI.Proto.InstantInput.InstantInputService instant_input_service = 18;
+    optional GDI.Proto.SportProfileSetup.SportProfileSetupService sport_profile_setup_service = 19;
+    optional GDI.Proto.HSAData.HSADataService hsa_data_service = 20;
+    optional GDI.Proto.LiveTrack.LiveTrackService live_track_service = 21;
+    optional GDI.Proto.ExploreSync.ExploreSyncService explore_sync_service = 22;
+    optional GDI.Proto.WaypointTransfer.WaypointTransferService way_point_transfer_service = 23;
+    optional GDI.Proto.DeviceMessages.DeviceMessageService device_message_service = 24;
+    optional GDI.Proto.LTE.LTEService lte_service = 25;
+    optional GDI.Proto.AntiTheftAlarm.AntiTheftAlarmService anti_theft_alarm_service = 26;
+    optional GDI.Proto.Credentials.CredentialsService credentials_service = 27;
+    optional GDI.Proto.InReachTracking.InReachTrackingService inreach_tracking_service = 28;
+    optional GDI.Proto.InReachMessaging.InReachMessagingService inreach_messaging_service = 29;
+    optional GDI.Proto.EventSharing.EventSharingService event_sharing = 30;
+    optional GDI.Proto.GenericItemTransfer.GenericItemTransferService generic_item_transfer_service = 31;
+    optional GDI.Proto.InReachContactSync.InReachContactSyncService inreach_contact_sync_service = 32;
+    optional GDI.Proto.HandCalibration.HandCalibrationService hand_calibration_service = 33;
+}

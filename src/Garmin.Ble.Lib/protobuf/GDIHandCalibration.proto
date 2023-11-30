@@ -1,0 +1,54 @@
+syntax = "proto2";
+package GDI.Proto.HandCalibration;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIHandCalibration";
+option optimize_for = LITE_RUNTIME;
+
+message CommandRequest {
+    enum Command {
+        START = 1;
+        ABORT = 2;
+        SAVE = 3;
+    }
+    optional Command command = 1;
+}
+
+message CommandResponse {
+    enum Status {
+        SUCCESS = 1;
+        BUSY = 2;
+        ERROR = 3;
+    }
+    optional Status status = 1;
+}
+
+message StepRequest {
+    enum HandType {
+        HOUR = 1;
+        MINUTE = 2;
+        SECOND = 3;
+    }
+    enum HandDirection {
+        CLOCKWISE = 1;
+        COUNTERCLOCKWISE = 2;
+    }
+    optional HandType hand_type = 1;
+    optional HandDirection hand_dir = 2;
+    optional uint32 hand_steps = 3; // Rotate step counts
+}
+
+message StepResponse {
+    enum Status {
+        SUCCESS = 1;
+        ERROR = 2;
+    }
+    optional Status status = 1;
+}
+
+message HandCalibrationService {
+    optional CommandRequest     command_request = 1;
+    optional CommandResponse    command_response = 2;
+    optional StepRequest        step_request = 3;
+    optional StepResponse       step_response = 4;
+}

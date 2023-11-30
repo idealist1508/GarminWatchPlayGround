@@ -1,0 +1,183 @@
+syntax = "proto2";
+package GDI.Proto.InternationalGolf;
+
+import "GDIDataTypes.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIInternationalGolf";
+option optimize_for = LITE_RUNTIME;
+
+enum MapType {
+    MEDIUM = 0;
+    MEDIUM_PLUS = 1;
+    INTERMEDIATE = 2;
+}
+
+message InternationalGolfService {
+    optional GetGolfCourseListRequest get_golf_course_list_request = 1;
+    optional GetGolfCourseListResponse get_golf_course_list_response = 2;
+
+    optional GetGolfCourseRequest get_golf_course_request = 3;
+    optional GetGolfCourseResponse get_golf_course_response = 4;
+
+    optional CourseUpdateRequest course_update_request = 5;
+    optional CourseUpdateResponse course_update_response = 6;
+
+    optional ScorecardDataNotification scorecard_data_notification = 7;
+
+    optional RoundSettingsRequest round_settings_request = 8;
+    optional RoundSettingsResponse round_settings_response = 9;
+
+    optional EndRoundRequest end_round_request = 10;
+    optional EndRoundResponse end_round_response = 11;
+
+    optional VirtualTournamentRequest virtual_tournament_request = 12;
+    optional VirtualTournamentResponse virtual_tournament_response = 13;
+
+    optional TournamentInfoRequest tournament_info_request = 14;
+    optional TournamentInfoResponse tournament_info_response = 15;
+}
+
+message GetGolfCourseListRequest {
+    required int32 num_courses = 1;                    // Number of courses to return.
+    optional GDI.Proto.DataTypes.ScPoint position = 2; // Must be set
+}
+
+message GetGolfCourseListResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 100;
+        DATABASE_ERROR = 200;
+    }
+    optional ResponseStatus status = 1;       // Must be set
+    repeated GolfCourseInfo course_list = 2;
+}
+
+message GetGolfCourseRequest {
+    required int32 build_id = 1;
+    required int32 global_id = 2;
+    optional MapType map_type = 3 [default=MEDIUM];  // If not set, MEDIUM will be the default.
+}
+
+message GetGolfCourseResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 100;
+        DATABASE_ERROR = 200;
+        COURSE_NOT_AVAILABLE = 300;
+    }
+    optional ResponseStatus status = 1;                                     // Must be set
+    optional bytes golf_course_data = 2;                                    // OMT golf course data in protobuf format
+    optional GDI.Proto.DataTypes.DataTransferItem golf_course_file = 3;     // May be used instead of bytes golf_course_data, if data is large
+    optional bytes golf_course_gma_data = 4;                                // optional Garmin Map Auth data, typically .gma
+    optional bytes golf_course_unl_data = 5;                                // optional Unlock data, typically .unl
+    optional int32 global_id = 6;                                           // Global Id matching the requested global_id
+    optional string part_number = 7;                                        // optional part number string, for applicable map types
+}
+
+message GolfCourseInfo {
+    required int32 build_id = 1;
+    required int32 global_id = 2;
+    optional GDI.Proto.DataTypes.ScPoint position = 3;  // Must be set
+    optional string name = 4;
+}
+
+message CourseUpdateRequestInfo {
+    optional int32 build_id = 1;      // Will be set if map is not a built-in map
+    required int32 global_id = 2;     // Will always be set
+    optional string part_number = 3;  // Will be set if map is a built-in map
+    optional int32 version = 4;       // Will be set if map is a built-in map
+}
+
+message CourseUpdateResponseInfo {
+    optional int32 build_id = 1;          // Will be set to the build id of the update if one exists.
+    required int32 global_id = 2;         // Will always be set
+    required bool  update_available = 3;  // Is an update available and ready to be sent to the device.
+}
+
+message CourseUpdateRequest {
+    optional MapType map_type = 1 [default=MEDIUM];  // If not set, MEDIUM will be the default.
+    repeated CourseUpdateRequestInfo installed_courses = 2;
+}
+
+message CourseUpdateResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 100;
+        ERROR = 200;
+    }
+    required ResponseStatus status = 1;
+    repeated CourseUpdateResponseInfo installed_courses = 2;
+}
+
+message ScorecardDataNotification {
+    required uint32 id = 1;
+    required uint32 size = 2;
+}
+
+// Direction: Device to App
+message RoundSettingsRequest {
+    required uint32 global_course_id = 1;
+    optional string tee_box_name = 2;
+    optional uint32 back_nine_global_course_id = 3;
+    optional string back_nine_tee_box_name = 4;
+}
+
+// Direction: App to Device
+// Optional members not set will signify 'unknown'.
+message RoundSettingsResponse {
+    optional bool is_tournament = 1;
+    optional bool is_live_scoring = 2;
+    optional sint32 player_course_handicap = 3; // expected range is [-128,127]
+    optional uint32 player_profile_id = 4; // Garmin Connect profile ID
+}
+
+message EndRoundRequest {
+    required uint32 global_course_id = 1;
+    required bool scorecard_saved = 2; // User action taken. 'false' signifies user wishes to discard/delete scorecard.
+    optional uint32 stop_time = 3; // Garmin epoch. Set when 'scorecard_saved' is true.
+}
+
+message EndRoundResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        ERROR = 2;
+    }
+    required ResponseStatus status = 1;
+}
+
+// Request the details for the currently active virtual tournament.
+message VirtualTournamentRequest {
+
+}
+
+// Respond with the details for the currently active virtual tournament.
+message VirtualTournamentResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        NO_ACTIVE_TOURNAMENT = 2;
+        NETWORK_UNAVAILABLE = 3;
+        NETWORK_ERROR = 4;
+    }
+    required ResponseStatus status = 1;
+    optional GolfCourseInfo course_info = 2;
+}
+
+// Request the details for the ongoing tournament.
+message TournamentInfoRequest {
+
+}
+
+// Direction: App to Device
+// The details of the ongoing tournament.
+message TournamentInfoResponse {
+    required bool is_tournament = 1;
+    optional string tournament_name = 2;
+    optional uint32 start_time = 3;
+    optional GolfCourseInfo course_info = 4;
+    optional string tee_box_name = 5;
+    optional GolfCourseInfo back_nine_course_info = 6;
+    optional string back_nine_tee_box_name = 7;
+}

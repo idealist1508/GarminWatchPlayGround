@@ -1,0 +1,355 @@
+syntax = "proto2";
+package GDI.Proto.HSAData;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIHSAData";
+option optimize_for = LITE_RUNTIME;
+
+message HSADataService {
+    /*--------------------------------------------------
+                    General HSA Messages
+    --------------------------------------------------*/
+    optional HSAFileXferRequest hsa_file_xfer_request                         = 1;
+    optional HSAFileXferNotification hsa_file_xfer_ntfctn                     = 2;
+
+    /*--------------------------------------------------
+                        UHC Messages
+    --------------------------------------------------*/
+    optional UHCAccelParametersSetRequest uhc_accel_params_set_request        = 3;
+    optional UHCAccelParametersSetResponse uhc_accel_params_set_response      = 4;
+
+    optional UHCAccelParametersGetRequest uhc_accel_params_get_request        = 5;
+    optional UHCAccelParametersGetResponse uhc_accel_params_get_response      = 6;
+
+    optional UHCActivationRequest uhc_activation_request                      = 7;
+    optional UHCActivationResponse uhc_activation_response                    = 8;
+
+    optional UHCFitParametersSetRequest uhc_fit_parameters_set_request        = 9;
+    optional UHCFitParametersSetResponse uhc_fit_parameters_set_response      = 10;
+
+    optional UHCFitParametersGetRequest uhc_fit_parameters_get_request        = 11;
+    optional UHCFitParametersGetResponse uhc_fit_parameters_get_response      = 12;
+
+    optional UHCTimeVarsSetRequest uhc_time_vars_set_request                  = 13;
+    optional UHCTimeVarsSetResponse uhc_time_vars_set_response                = 14;
+
+    /*--------------------------------------------------
+                    General HSA Messages
+    --------------------------------------------------*/
+    optional HSAFitLogConfigRequest hsa_fit_log_config_request                = 15;
+    optional HSAFitLogConfigResponse hsa_fit_log_config_response              = 16;
+
+    optional HSAFitLogCapabilitiesRequest hsa_fit_log_capabilities_request    = 17;
+    optional HSAFitLogCapabilitiesResponse hsa_fit_log_capabilities_response  = 18;
+
+    optional HSAFeaturesRequest hsa_features_request                          = 19;
+    optional HSAFeaturesResponse hsa_features_response                        = 20;
+}
+
+/*---------------------------------------------------
+               HSA Features Message
+---------------------------------------------------*/
+enum HSAFeatures {
+    UNITED_HEALTHCARE   = 0x01;
+    CUSTOM_DATA_LOGGING = 0x02;
+}
+
+/*--------------------------------------------------
+ SDK to Device
+ Request the HSA features supported on this the device.
+--------------------------------------------------*/
+message HSAFeaturesRequest {
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the HSAFeaturesRequest message.
+ --------------------------------------------------*/
+message HSAFeaturesResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+
+    required ResponseStatus status = 1;
+    required uint32 features_bf = 2;
+}
+
+/*--------------------------------------------------
+                HSA File Transfer
+ --------------------------------------------------
+ --------------------------------------------------
+ SDK to Device
+ Initiate a sync of HSA files. If the RequestType
+ is UHC then UHC step files are being requested.
+ The Custom RequestType is for custom logging files.
+ --------------------------------------------------*/
+message HSAFileXferRequest {
+    required bool   request_sync = 1;
+    enum RequestType {
+        UHC = 0;
+        CUSTOM = 1;
+    }
+    optional RequestType request_type = 2 [default = UHC];
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the HSAFileXferRequest message.
+ It contains an array of file information that can
+ be used to download the file from the device.
+ --------------------------------------------------*/
+message HSAFileXferNotification {
+    repeated  HSADataTransferItem file_xfer_list = 1;
+}
+message HSADataTransferItem {
+    required uint32 id   = 1;
+    required uint32 size = 2;
+}
+
+/*--------------------------------------------------
+               UHC Accel Parameters
+ --------------------------------------------------
+ --------------------------------------------------
+ SDK to Device
+ Set the UHC FIT Widget step parameters.
+ --------------------------------------------------*/
+message UHCAccelParametersSetRequest {
+    required uint32 sessions_per_day         = 1;
+    required uint32 pre_collection_intervals = 2;
+    required uint32 num_collection_intervals = 3;
+    required uint32 min_steps_per_interval   = 4;
+    required uint32 max_steps_per_interval   = 5;
+    required uint32 interval_sample_size     = 6;
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the UHCAccelParametersSetRequest message.
+ --------------------------------------------------*/
+message UHCAccelParametersSetResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+    required ResponseStatus status = 1;
+}
+
+/*--------------------------------------------------
+ SDK to Device
+ Get the UHC FIT Widget accelerometer parameters.
+ --------------------------------------------------*/
+message UHCAccelParametersGetRequest {
+    required bool get_parameters = 1;
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the UHCAccelParametersGetRequest message.
+ --------------------------------------------------*/
+message UHCAccelParametersGetResponse {
+    required uint32 sessions_per_day         = 1;
+    required uint32 pre_collection_intervals = 2;
+    required uint32 num_collection_intervals = 3;
+    required uint32 min_steps_per_interval   = 4;
+    required uint32 max_steps_per_interval   = 5;
+    required uint32 interval_sample_size     = 6;
+}
+
+/*--------------------------------------------------
+                  UHC Activation
+ --------------------------------------------------
+ --------------------------------------------------
+ SDK to Device
+ Activate and display the UHC FIT Widget on the device.
+ --------------------------------------------------*/
+message UHCActivationRequest {
+    required bool   activate_uhc   = 1;
+    required uint32 activation_key = 2;
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the UHCActivationRequest message.
+ --------------------------------------------------*/
+message UHCActivationResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+    required ResponseStatus status   = 1;
+    required int32          uhc_UUID = 2;
+}
+
+/*--------------------------------------------------
+                UHC FIT Parameters
+ --------------------------------------------------
+ --------------------------------------------------
+ SDK to Device
+ Set the UHC FIT Widget step parameters.
+ --------------------------------------------------*/
+message UHCFitParametersSetRequest {
+    required uint32 freq_period_step_goal = 1;
+    required uint32 freq_period_len_mins  = 2;
+    required uint32 freq_delay_len_mins   = 3;
+    required uint32 freq_daily_goal_cnt   = 4;
+    required uint32 inten_step_goal       = 5;
+    required uint32 inten_active_min_goal = 6;
+    required uint32 tenac_daily_step_goal = 7;
+}
+/*--------------------------------------------------
+ Device to SDK
+ Response to the UHCFitParametersSetRequest message.
+ --------------------------------------------------*/
+message UHCFitParametersSetResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+    required ResponseStatus status = 1;
+}
+/*--------------------------------------------------
+ SDK to Device
+ Get the UHC FIT Widget step parameters.
+ --------------------------------------------------*/
+message UHCFitParametersGetRequest {
+    required bool get_parameters = 1;
+}
+/*--------------------------------------------------
+ Device to SDK
+ Response to the UHCFitParametersGetRequest message.
+ --------------------------------------------------*/
+message UHCFitParametersGetResponse {
+    required uint32 freq_period_step_goal = 1;
+    required uint32 freq_period_len_mins  = 2;
+    required uint32 freq_delay_len_mins   = 3;
+    required uint32 freq_daily_goal_cnt   = 4;
+    required uint32 inten_step_goal       = 5;
+    required uint32 inten_active_min_goal = 6;
+    required uint32 tenac_daily_step_goal = 7;
+}
+
+/*--------------------------------------------------
+                UHC Time Variables
+ --------------------------------------------------
+ --------------------------------------------------
+ SDK to Device
+ Set the UHC FIT Widget time zone parameters.
+ --------------------------------------------------*/
+message UHCTimeVarsSetRequest {
+    required bool   set_time             = 1;
+    optional uint32 rtc_time_sec         = 2;
+    optional uint32 time_to_midnight_sec = 3;
+    optional int32  timezone_offset      = 4;
+}
+/*--------------------------------------------------
+ Device to SDK
+ Response to the UHCTimeVarsSetRequest message.
+ --------------------------------------------------*/
+message UHCTimeVarsSetResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+    required ResponseStatus status       = 1;
+    required uint32 rtc_time_sec         = 2;
+    required uint32 time_to_midnight_sec = 3;
+}
+
+/*--------------------------------------------------
+                Custom Log Config
+ --------------------------------------------------
+ --------------------------------------------------
+ SDK to Device
+ Configure custom logging settings on the device.
+ --------------------------------------------------*/
+message HSAFitLogConfigRequest {
+    optional HSAFitLogConfig config = 1;
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the HSAFitLogConfigRequest message.
+ --------------------------------------------------*/
+message HSAFitLogConfigResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+    required ResponseStatus  status = 1;
+    optional HSAFitLogConfig config = 2;
+}
+
+/*--------------------------------------------------
+ Device to SDK and SDK to Device
+ Message containing configuration values.
+ state: true  = on, false = off, missing = get values
+ source: type of data being configured
+ processing_interval: number of seconds of data
+ used to calculate the source (ignored if state
+ is missing)
+ --------------------------------------------------*/
+message HSAFitLogConfig {
+    enum SourceType {
+        HRV           = 0;
+        ZERO_CROSSING = 1;
+        HEART_RATE    = 2;
+        RAW_ACCEL     = 3;
+        RAW_PPG       = 4;
+        RESPIRATION   = 5;
+        SPO2          = 6;
+        STEPS         = 7;
+        STRESS        = 8;
+        HYDRATION     = 9;
+        BODY_BATTERY  = 10;
+    }
+
+    optional bool state                 = 1;
+    required SourceType source          = 2;
+    optional uint32 processing_interval = 3; // seconds
+}
+
+/*---------------------------------------------------
+ Custom Log Capabilities
+ ---------------------------------------------------*/
+enum HSAFitLogCapabilities {
+    HRV           = 0x01;
+    ZERO_CROSSING = 0x02;
+    HEART_RATE    = 0x04;
+    RAW_ACCEL     = 0x08;
+    RAW_PPG       = 0x10;
+    RESPIRATION   = 0x20;
+    SPO2          = 0x40;
+    STEPS         = 0x80;
+    STRESS        = 0x100;
+    HYDRATION     = 0x200;
+    BODY_BATTERY  = 0x400;
+}
+
+/*--------------------------------------------------
+ SDK to Device
+ Request the logging capabilities of the device.
+ --------------------------------------------------*/
+message HSAFitLogCapabilitiesRequest {
+}
+
+/*--------------------------------------------------
+ Device to SDK
+ Response to the HSAFitLogCapabilitiesRequest message.
+ --------------------------------------------------*/
+message HSAFitLogCapabilitiesResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK                      = 100;
+        ERROR                   = 200;
+    }
+
+    required ResponseStatus status = 1;
+    required uint32 capabilities_bf = 2;
+}

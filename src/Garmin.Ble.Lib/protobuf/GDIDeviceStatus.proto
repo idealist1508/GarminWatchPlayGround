@@ -1,0 +1,43 @@
+syntax = "proto2";
+package GDI.Proto.DeviceStatus;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIDeviceStatus";
+option optimize_for = LITE_RUNTIME;
+
+message DeviceStatusService {
+    optional RemoteDeviceBatteryStatusChangedNotification remote_device_battery_status_changed_notification = 1;
+    optional RemoteDeviceBatteryStatusRequest remote_device_battery_status_request = 2;
+    optional RemoteDeviceBatteryStatusResponse remote_device_battery_status_response = 3;
+    optional GetCurrentActivityStatusRequest activity_status_request = 4;
+    optional GetCurrentActivityStatusResponse activity_status_response = 5;
+}
+
+message RemoteDeviceBatteryStatusChangedNotification {}
+message RemoteDeviceBatteryStatusRequest {}
+message RemoteDeviceBatteryStatusResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+        NO_REMOTE_DEVICE = 2;
+    }
+
+    required ResponseStatus status = 1;
+    optional uint32 current_battery_level = 2; // Percentage from 0 to 100
+}
+
+//Get Current Activity Status request is sent from app to device
+//when it wants to know if the device is currently in an activity.
+message GetCurrentActivityStatusRequest {
+}
+
+message GetCurrentActivityStatusResponse {
+    enum ActivityStatus {
+        OFF             = 0; // Timer is off
+        STOPPED         = 1; // Timer is stopped but not saved/discarded (user initiated)
+        PAUSED          = 2; // Timer is paused (auto pause; not user initiated)
+        ON              = 3; // Timer is running
+    }
+
+    optional ActivityStatus activity_status = 1; //current activity status
+}

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="toBin" type="DotNetFolderPublish" factoryName="Publish to folder">
+    <riderPublish configuration="Release" delete_existing_files="true" platform="Any CPU" ready_to_run="true" runtime="linux-x64" self_contained="true" target_folder="$USER_HOME$/.bin/GarminWatchTools" target_framework="net6.0" uuid_high="-5409694456400689631" uuid_low="-5559724342415791173" />
+    <method v="2" />
+  </configuration>
+  <configuration default="false" name="toBin" type="DotNetFolderPublish" factoryName="Publish to folder">
+    <riderPublish configuration="Release" delete_existing_files="true" platform="Any CPU" produce_single_file="true" ready_to_run="true" runtime="linux-x64" self_contained="true" target_folder="$USER_HOME$/.bin/GarminWatchTools" target_framework="net6.0" uuid_high="-4365719934513757501" uuid_low="-9001008663283173936" />
+    <method v="2" />
+  </configuration>
+</component>

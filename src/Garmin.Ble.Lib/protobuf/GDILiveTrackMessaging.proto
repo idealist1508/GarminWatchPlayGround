@@ -1,0 +1,87 @@
+syntax = "proto2";
+package GDI.Proto.LiveTrackMessaging;
+
+// FOR JAVA (Android) COMPILATION ONLY
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDILiveTrackMessagingProto";
+option optimize_for = LITE_RUNTIME;
+
+message LiveTrackMessagingService {
+    optional SendLiveTrackMessageRequest send_live_track_message_request   = 1;
+    optional SendLiveTrackMessageResponse send_live_track_message_response = 2;
+    optional GetLiveTrackMessagesRequest get_live_track_messages_request   = 3;
+    optional GetLiveTrackMessagesResponse get_live_track_messages_response = 4;
+}
+
+// Device -> GCM
+message SendLiveTrackMessageRequest {
+    repeated string recipient_session_ids = 1;  // List of UTF-8 encoded recipient session IDs
+    required LiveTrackMessageBody live_track_message_body = 2;     // The message details
+}
+
+// GCM -> Device
+message SendLiveTrackMessageResponse {
+    enum SendLiveTrackMessageStatus {
+        OK                      = 0; // Message was transmitted successfully
+        UNKNOWN_ERROR           = 1; // An unknown error has occurred
+        NETWORK_FAILURE         = 2; // Connectivity issue
+        TIMEOUT                 = 3; // HTTP connection time out
+        SERVER_ERROR            = 4; // Error occured in the server prior to processing the request
+        INVALID_SERVER_RESPONSE = 5; // Server returns invalid or empty response
+        NOT_LIVE_TRACKING       = 6;
+        EMPTY_SESSION_IDS       = 7;
+    }
+
+    optional SendLiveTrackMessageStatus send_live_track_message_status = 1; // Status of the SendLiveTrackMessageRequest as a whole
+    repeated SendLiveTrackMessageError send_live_track_message_errors = 2;  // Status of the SendLiveTrackMessageRequest's individual recipient
+}
+
+message SendLiveTrackMessageError {
+    enum LiveTrackMessageErrorType {
+        UNKNOWN_ERROR             = 0; // An unknown error has occurred
+        SENDER_SESSION_INVALID    = 1; // Sender session ID is missing or invalid
+        SENDER_SESSION_ENDED      = 2; // Sender session has ended
+        RECIPIENT_SESSION_INVALID = 3; // Recipient session ID is missing or invalid
+        RECIPIENT_SESSION_ENDED   = 4; // Recipient session has ended
+    }
+
+    repeated string session_ids = 1;  // List of session IDs encountering the error
+    required LiveTrackMessageErrorType live_track_message_error_type = 2;  // the type of error
+    optional string error_message_text = 3;  // informative details of the error
+}
+
+// Device -> GCM
+message GetLiveTrackMessagesRequest {
+    optional uint64 last_received_tracker_message_seq = 1 [default=0];    // The sequence ID if the most recently received message. 0 will result in all queued messages for the session being returned
+}
+
+// GCM -> Device
+message GetLiveTrackMessagesResponse {
+    enum GetLiveTrackMessagesStatus {
+        OK                      = 0; // Message was transmitted successfully
+        UNKNOWN_ERROR           = 1; // An unknown error has occurred
+        NETWORK_FAILURE         = 2; // Connectivity issue
+        TIMEOUT                 = 3; // HTTP connection time out
+        SERVER_ERROR            = 4; // Error occured in the server prior to processing the request
+        INVALID_SERVER_RESPONSE = 5; // Server returns invalid or empty response
+        NOT_LIVE_TRACKING       = 6;
+    }
+
+    required GetLiveTrackMessagesStatus get_live_track_messages_status = 1; // Status of the GetLiveTrackMessagesRequest
+    repeated LiveTrackMessage live_track_messages = 2; // The list of messages
+    optional uint32 call_interval = 3; // Suggested interval before the next GetLiveTrackMessagesRequest call in seconds.
+}
+
+message LiveTrackMessage {
+    required string sender_session_id = 1;     // UTF-8 encoded session ID of the sending party
+    required string sender_display_name = 2;   // UTF-8 encoded display name of the sending party
+    required uint64 tracker_message_seq = 3;   // The message sequence ID. This is the last (largest) value returned in previous response to be used in subsequent GetLiveTrackMessageRequests
+    required LiveTrackMessageBody live_track_message_body = 4;     // The message details
+}
+
+message LiveTrackMessageBody {
+    required uint64 message_id = 1;     // ID of the message. Used in cases where the message can be translated by the recipient.
+    required string message_text = 2;   // UTF-8 encoded text of the message in sender's language
+    required uint64 timestamp = 3;      // Time the message was sent
+}
+

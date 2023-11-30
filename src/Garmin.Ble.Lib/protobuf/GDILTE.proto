@@ -1,0 +1,123 @@
+syntax = "proto2";
+package GDI.Proto.LTE;
+
+// FOR JAVA (Android) COMPILATION ONLY
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDILTEProto";
+option optimize_for = LITE_RUNTIME;
+
+message LTEService {
+    optional LTEDeviceInfoRequest lte_device_info_request                         = 1;
+    optional LTEDeviceInfoResponse lte_device_info_response                       = 2;
+    optional LTEDeviceStatusRequest lte_device_status_request                     = 3;
+    optional LTEDeviceStatusResponse lte_device_status_response                   = 4;
+    optional LTEServiceActivationNotification lte_service_activation_notification = 5;
+    optional LTEPhoneInfoRequest phone_info_request                               = 6;
+    optional LTEPhoneInfoResponse phone_info_response                             = 7;
+}
+
+enum LTEServiceProvider {
+        VERIZON = 1;
+        OTHER   = 2;
+}
+
+enum LTEModemStatus {
+        UNKNOWN = 0; // Device couldn't determine modem state or no modem found
+        ON      = 1; // Modem is currently powered up
+        OFF     = 2; // Modem is currently off or power up hasn't completed
+}
+
+// Encapsulates LTE settings
+message LTEDeviceInfo {
+    required string imei = 1;
+    required string iccid = 2;
+}
+
+// GCM -> Device
+// Request for LTE settings (without waiting on activation status).
+message LTEDeviceInfoRequest {
+    // empty
+}
+
+// Device -> GCM
+// Returns LTE settings or an error code
+message LTEDeviceInfoResponse {
+    enum ResponseStatus {
+        UNKNOWN           = 0; // info couldn't be found
+        OK                = 1; // info found, payload must be initialized
+        NOT_AN_LTE_DEVICE = 2; // sender is not an LTE device
+        ERROR             = 3; // generic error
+    }
+
+    required ResponseStatus response_status = 1;
+    optional LTEDeviceInfo lte_device_info = 2;
+    optional LTEModemStatus modem_status = 3;
+}
+
+// GCM -> Device
+// Ask a device for the current status of LTE service activation.  There could
+// be some overhead time, so senders can ask the recipient to cap the max wait
+// time to return a response; without obligation.
+message LTEDeviceStatusRequest {
+    optional uint32 timeout = 1; // Suggested max wait time for recipient to look
+                                 // for its current LTE service activation
+                                 // status.  Recipient doesn't have to honor this
+                                 // wait time.
+}
+
+// Device -> GCM
+// Returns LTE service activation status for a device or an error code if it
+// couldn't be returned.
+message LTEDeviceStatusResponse {
+    enum ResponseStatus {
+        UNKNOWN           = 0; // status couldn't be found
+        LTE_ACTIVE        = 1; // LTE service has been activated on device
+        LTE_INACTIVE      = 2; // LTE service not yet activated on device
+        NOT_AN_LTE_DEVICE = 3; // sender is not an LTE device
+        TIMEOUT           = 4; // Request processing timed out; wait to resend
+        TRY_AGAIN         = 5; // Request processing was aborted, sender can
+                               // immediately reaattempt query
+        ERROR             = 6; // generic error
+    }
+
+    required ResponseStatus response_status = 1;
+    optional LTEDeviceInfo lte_device_info = 2; // must set if LTE status was
+                                                // found
+    optional LTEModemStatus modem_status = 3;
+}
+
+// GCM -> Device
+// Sent when a user has successfully activated an LTE account with a service
+// provider.
+message LTEServiceActivationNotification {
+    enum ActivationStatus {
+        STARTED           = 0; // Modem activation has started
+        CANCELLED         = 1; // Modem activation was cancelled or activation did not complete successfully
+        SUCCESS           = 2; // Modem activation completed successfully
+    }
+
+    optional LTEServiceProvider service_provider = 1;
+    optional ActivationStatus status = 2;
+}
+
+// Encapsulates phone settings
+message LTEPhoneInfo {
+    optional LTEServiceProvider service_provider = 1;
+}
+
+// Device -> GCM
+// Request for phone settings
+message LTEPhoneInfoRequest {
+    // empty
+}
+
+// GCM -> Device
+message LTEPhoneInfoResponse {
+    enum ResponseStatus {
+        UNKNOWN           = 0; // info couldn't be found
+        OK                = 1; // info found, payload must be initialized
+        ERROR             = 2; // generic error
+    }
+    required ResponseStatus status = 1;
+    optional LTEPhoneInfo phone_info = 2;
+}

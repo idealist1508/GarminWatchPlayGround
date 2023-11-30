@@ -1,0 +1,141 @@
+syntax = "proto2";
+package GDI.Proto.WifiSetup;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIWifiSetup";
+option optimize_for = LITE_RUNTIME;
+
+message WifiSetupService {
+    //========= Messages to support Index Scale WiFi setup ===========
+    optional AccessPointScanRequest access_point_scan_request = 1;
+    optional AccessPointScanResponse access_point_scan_response = 2;
+
+    optional StoreAccessPointNotification store_access_point_notification = 3;
+
+    optional VerifyConnectionRequest verify_connection_request = 4;
+    optional VerifyConnectionResponse verify_connection_response = 5;
+
+    // This is deprecated and will not be used going forward for newer products.
+    // This message only sends the OAuth credentials individually but instead we should
+    // be building and sending the Full WifiSEtupAgent msg always.
+    optional OAuthCredentialsRequest oauth_credentials_request = 6;
+    optional OAuthCredentialsResponse oauth_credentials_response = 7;
+
+    //========= Messages to support newer devices that want to follow the request/response pattern ===========
+    optional StoredAccessPointRequest access_point_request = 8;
+    optional StoredAccessPointResponse access_point_response = 9;
+
+    // New Scan start Notification and Scan complete notifications.
+    // Optionally, this scan request will trigger a disconnect on the remote device if the device does not
+    // support concurrent BLE/Wifi support, and the response will be sent by the remote device on a reconnect.
+    // Otherwise, the response will be sent by the remote device when the scan is complete.
+    optional AccessPointStartScanNotification access_point_start_scan_notification = 10;
+    optional AccessPointScanCompleteNotification access_point_scan_complete_notification = 11;
+
+    // New Connection Verification request and response.
+    // Optionally, this request will trigger a disconnect on devices that do not support concurrent BLE/Wifi
+    // connection and on reconnect, the remote device will send a verification status notification.
+    // Otherwise, the verification status notification will be sent on completion.
+    optional VerifyConnectionNotification verify_connection_notification = 12;
+    optional ConnectionVerificationStatusNotification connection_verification_status_notification = 13;
+
+    // StoreAccessPointNotification is only for Index scale, all other devices use
+    // this update msg for all Updates/Forget/Store actions on Access Points.
+    optional UpdateAccessPointRequest update_access_point_request = 14;
+    optional UpdateAccessPointResponse update_access_point_response = 15;
+
+    // This is functionally the same as the req/response 6 and 7 above.
+    // But 6 and 7 are only sending the OAUTHResponse message individually
+    // but this will follow the general paradigm where everything is sent as
+    // a whole WifiSetupAgent message.
+    optional OAuthCredentialsRequest oauth_credentials_request_with_agent_msg = 16;
+    optional OAuthCredentialsResponse oauth_credentials_response_with_agent_msg = 17;
+}
+
+// Request for getting already scanned access points/stored points.
+// Remote device will not start a scan if it does not have any.
+message AccessPointScanRequest {
+
+}
+
+// Response with information on already scanned/stored access points if any.
+message AccessPointScanResponse {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+// Request to start a scan. GCM will expect that
+// some remote devices BT might disconnect temporarily.
+message AccessPointStartScanNotification {
+
+}
+
+// Scan results sent once the remote device reconnects
+// with GCM BT.
+message AccessPointScanCompleteNotification {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+// Request for getting stored access points.
+message StoredAccessPointRequest {
+
+}
+
+// Results from the stored list.
+message StoredAccessPointResponse {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+message StoreAccessPointNotification {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+message UpdateAccessPointRequest {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+// Results from the stored list after forgetting an Access Point.
+message UpdateAccessPointResponse {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+message VerifyConnectionRequest {
+
+}
+
+message VerifyConnectionResponse {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+// Request to verify the WIFI connection. GCM will expect that
+// the remote device BT will disconnect temporarily.
+message VerifyConnectionNotification {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+// Connection Verification results sent once the remote device reconnects
+// with GCM BT.
+message ConnectionVerificationStatusNotification {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}
+
+// Requests the user's GC credentials
+// Device -> GCM
+message OAuthCredentialsRequest {
+
+}
+
+// Response containing the user's GC credentials
+// GCM -> Device
+message OAuthCredentialsResponse {
+    // XTEA Encrypted protobuf for wifi messages
+    required bytes encrypted_wifi_protobuf = 1;
+}

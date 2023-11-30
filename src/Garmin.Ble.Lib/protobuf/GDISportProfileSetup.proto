@@ -1,0 +1,35 @@
+syntax = "proto2";
+package GDI.Proto.SportProfileSetup;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDISportProfileSetup";
+option optimize_for = LITE_RUNTIME;
+
+message SportProfileSetupService {
+    optional SupportedSportListRequest supported_sport_list_request = 1;
+    optional SupportedSportListResponse supported_sport_list_response = 2;
+
+    optional SelectedSportListNotification selected_sport_list_notification = 3;
+}
+
+// GCM -> Device
+message SupportedSportListRequest {
+    // empty
+}
+
+// Device -> GCM
+message SupportedSportListResponse {
+    repeated Sport sport = 1; // List of supported sport profiles and their default selected-states
+    optional bool profile_setup_complete = 2 [default = false]; // Returns true if the user has set up activity profiles on the device
+}
+
+// GCM -> Device
+message SelectedSportListNotification {
+    repeated Sport sport = 1; // List of supported sport profiles and their new selected-status based on user input
+}
+
+message Sport {
+    required uint32 sport_fit_type = 1;
+    required uint32 sport_fit_sub_type = 2;
+    required bool enabled = 3;
+}

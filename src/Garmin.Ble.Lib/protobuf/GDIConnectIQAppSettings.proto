@@ -1,0 +1,59 @@
+syntax = "proto2";
+package GDI.Proto.ConnectIQAppSettings;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDIConnectIQAppSettingsProto";
+option optimize_for = LITE_RUNTIME;
+
+message ConnectIQAppSettingsService {
+    optional GetAppSettingsRequest    get_app_settings_request   = 1;
+    optional GetAppSettingsResponse   get_app_settings_response  = 2;
+    optional SaveAppSettingsRequest   save_app_settings_request  = 3;
+    optional SaveAppSettingsResponse  save_app_settings_response = 4;
+    optional SendAppSettingsRequest   send_app_settings_request  = 5;
+    optional SendAppSettingsResponse  send_app_settings_response = 6;
+}
+
+message GetAppSettingsRequest {
+    required bytes app_identifier = 1;
+}
+
+message GetAppSettingsResponse {
+    enum Response {
+       UNKNOWN_RESPONSE = 0;
+       SUCCESS = 1;
+       APP_NOT_INSTALLED = 2;
+    }
+    required bytes      app_identifier = 1;
+    optional Response   response = 2;
+}
+
+message SendAppSettingsRequest {
+    required bytes      app_identifier = 1;
+    optional bytes      settings_values = 2;         // Serialized monkey brains data representing the current values for the settings
+}
+
+message SendAppSettingsResponse {
+    enum Response {
+        UNKNOWN_RESPONSE = 0;
+        SUCCESS = 1;
+    }
+    optional Response response = 1;
+}
+
+message SaveAppSettingsRequest {
+    required bytes      app_identifier = 1;
+    optional bytes      settings_values = 2;         // Serialized monkey brains data representing the new values for the settings.  Should include
+                                                     // all setting values whether changed or not.
+}
+
+message SaveAppSettingsResponse {
+    enum Response {
+        UNKNOWN_RESPONSE        = 0;
+        SUCCESS                 = 1;
+        FAILED_TO_SAVE          = 2;
+    }
+
+    required bytes    app_identifier = 1;
+    optional Response response       = 2;
+}

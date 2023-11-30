@@ -1,0 +1,151 @@
+syntax = "proto2";
+package GDI.Proto.Core;
+
+import "GDIDataTypes.proto";
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDICore";
+option optimize_for = LITE_RUNTIME;
+
+message CoreService {
+
+    optional SyncRequest sync_request = 1;
+    optional SyncResponse sync_response = 2;
+
+    optional GetLocationRequest get_location_request = 3;
+    optional GetLocationResponse get_location_response = 4;
+
+    optional LocationUpdatedSetEnabledRequest location_updated_set_enabled_request = 5;
+    optional LocationUpdatedSetEnabledResponse location_updated_set_enabled_response = 6;
+    optional LocationUpdatedNotification location_updated_notification = 7;
+}
+
+message LocationData {
+    enum DataType {
+        SIGNIFICANT_LOCATION = 0; // Only "significant" location updates, as determined by the phone's OS (no extension)
+        GENERAL_LOCATION     = 1; // Device or phone's location data whenever GPS happens to be on (no extension)
+        REALTIME_TRACKING    = 2; // Real-time track points (no extension)
+        INREACH_TRACKING     = 3; // inReach Tracking points (uses extension 1000, see GDIInReachTracking.proto)
+    }
+
+    extensions 1000 to max;
+
+    optional GDI.Proto.DataTypes.ScPoint position   = 1;  // semi-circles
+    optional float altitude                         = 2;  // meters (above WGS84)
+    optional uint32 timestamp                       = 3;  // Garmin Epoch timestamp
+    optional float horizontal_accuracy              = 4;  // meters
+    optional float vertical_accuracy                = 5;  // meters
+    optional DataType datatype                      = 6;  // describes the data and indicates if an extension should be present or not.
+    optional GDI.Proto.DataTypes.UUID session_uuid  = 7;  // identifies the tracking / inReach tracking session
+    optional GDI.Proto.DataTypes.GPSFixType gps_fix = 8;
+    optional float course                           = 9;  // degrees (true north)
+    optional float speed                            = 10; // meters per second
+}
+
+message GetLocationRequest {
+    enum RequestType {
+        STANDARD  = 0;
+        EMERGENCY = 1;
+    }
+    optional RequestType request_type = 1 [default = STANDARD];
+}
+
+message GetLocationResponse {
+    enum Status {
+        OK = 1;
+        NO_VALID_LOCATION = 2; // Location services are available, but we don't know where we are
+        LOCATION_SERVICES_UNAVAILABLE = 3; // Location services are currently unavailable
+        LOCATION_SERVICES_DISABLED = 4; // Location services are currently unavailable and never will be
+        TRY_AGAIN_LATER = 5; // The system needs some time to get the location; try again later
+    }
+    required Status status = 1;
+    optional LocationData location_data = 2;
+}
+
+/*----------------------------------------------------------
+ Device <-> App
+
+ Sent to enable or disable LocationUpdatedNotifications.
+
+ If enabled = true and requests is empty, the behavior is
+ equivalent to having a single SIGNIFICANT_LOCATION Request.
+
+ If enabled = false, requests is ignored and any
+ LocationUpdatedNotifications that were enabled are now
+ disabled.
+
+ Further information is available here:
+ https://confluence.garmin.com/display/DI/GFDI+-+Point+Tracking
+----------------------------------------------------------*/
+message LocationUpdatedSetEnabledRequest {
+
+    // Note that the parameters other than the DataType
+    // are recommendations and not requirements.
+    // The behavior is ultimately up to the implementation.
+    message Request {
+        optional LocationData.DataType requested = 1; // which type of LocationData to receive
+        optional uint32 min_update_threshold     = 2; // send LocationUpdatedNotifications not more than once every min_update_threshold seconds (currently only applies to GENERAL_LOCATION)
+        optional float distance_threshold        = 3; // distance (in meters) that must be exceeded before LocationUpdatedNotification is sent (currently only applies to GENERAL_LOCATION)
+    }
+
+    required bool enabled     = 1;
+    repeated Request requests = 2;
+}
+
+/*----------------------------------------------------------
+ Device <-> App
+
+ The behavior of this response depends on whether or not
+ the receiver of the LocationUpdatedSetEnabledRequest has
+ implemented the original version of this interface or
+ "version 2".
+
+ Further information is available here:
+ https://confluence.garmin.com/display/DI/GFDI+-+Point+Tracking
+----------------------------------------------------------*/
+message LocationUpdatedSetEnabledResponse {
+    enum Status {
+        OK                   = 1; // Some or all of the requested DataTypes are available (see requests field)
+        NOT_AVAILABLE        = 2; // No requested DataTypes are available
+    }
+
+    message RequestStatus {
+        enum Status {
+            OK                   = 1; // Request succeeded.
+            NOT_AVAILABLE        = 2; // DataType is not available.
+            UNSUPPORTED_CRITERIA = 3; // Criteria included in the Request is invalid or unsupported.
+            GENERIC_ERROR        = 4; // An error occurred while processing the request.
+        }
+        optional LocationData.DataType requested = 1;
+        optional Status status                   = 2;
+    }
+
+    required Status status          = 1;
+
+    // Indicates which Requests succeeded and which didn't.
+    // This field will be empty if the request handler only
+    // supports the original version of this interface.
+    repeated RequestStatus requests = 2;
+}
+
+/*----------------------------------------------------------
+ Device <-> App
+
+ Further information is available here:
+ https://confluence.garmin.com/display/DI/GFDI+-+Point+Tracking
+----------------------------------------------------------*/
+message LocationUpdatedNotification {
+    repeated LocationData location_data = 1;
+}
+
+message SyncRequest {
+}
+
+message SyncResponse {
+    enum ResponseStatus {
+        UNKNOWN_RESPONSE_STATUS = 0;
+        OK = 1;
+    }
+
+    required ResponseStatus status = 1;
+}

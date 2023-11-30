@@ -1,0 +1,28 @@
+syntax = "proto2";
+package GDI.Proto.SwingSensorMetrics;
+
+option java_package = "com.garmin.proto.generated";
+option java_outer_classname = "GDISwingSensorMetrics";
+option optimize_for = LITE_RUNTIME;
+
+message SwingMetrics {
+    optional float swing_speed = 1;
+    optional float backswing_time = 2;
+    optional float downswing_time = 3;
+    optional float shaft_lean_at_address = 4;
+    optional float shaft_angle_at_address = 5;
+    optional float club_path_at_impact = 6;
+    optional float face_angle_at_impact = 7;
+    optional float club_loft_at_impact = 8;
+    optional float shaft_lean_at_impact = 9;
+    optional float shaft_angle_at_impact = 10;
+    optional uint64 club_id = 11;
+    optional float angle_of_attack = 12;
+    optional float face_to_target_at_impact = 13;
+    optional float club_loft_offset_at_impact = 14;
+    optional bool impact_was_made = 15;
+}
+
+message SwingMetricsNotification {
+    required SwingMetrics swing_metrics = 1;
+}
